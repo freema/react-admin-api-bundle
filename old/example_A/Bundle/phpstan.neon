@@ -1,0 +1,10 @@
+parameters:
+    level: max
+    inferPrivatePropertyTypeFromConstructor: true
+    paths:
+        - ./src/
+    excludePaths:
+        - */cache/*
+        - ./src/DependencyInjection
+    ignoreErrors:
+        - '#Method VLM\\TaskWorkerBundle\\TaskWorkerBundle::getContainerExtension\(\) should return VLM\\TaskWorkerBundle\\DependencyInjection\\TaskWorkerExtension but returns Symfony\\Component\\DependencyInjection\\Extension\\ExtensionInterface\|false#'

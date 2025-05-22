@@ -1,0 +1,226 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Freema\ReactAdminApiBundle\Controller;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Freema\ReactAdminApiBundle\Dto\AdminApiDto;
+use Freema\ReactAdminApiBundle\Interface\DtoInterface;
+use Freema\ReactAdminApiBundle\Interface\DataRepositoryCreateInterface;
+use Freema\ReactAdminApiBundle\Interface\DataRepositoryDeleteInterface;
+use Freema\ReactAdminApiBundle\Interface\DataRepositoryFindInterface;
+use Freema\ReactAdminApiBundle\Interface\DataRepositoryListInterface;
+use Freema\ReactAdminApiBundle\Interface\DataRepositoryUpdateInterface;
+use Freema\ReactAdminApiBundle\Request\CreateDataRequest;
+use Freema\ReactAdminApiBundle\Request\DeleteDataRequest;
+use Freema\ReactAdminApiBundle\Request\DeleteManyDataRequest;
+use Freema\ReactAdminApiBundle\Request\ListDataRequest;
+use Freema\ReactAdminApiBundle\Request\UpdateDataRequest;
+
+#[Route]
+class ResourceController extends AbstractController implements LoggerAwareInterface
+{
+    use LoggerAwareTrait;
+
+    #[Route(path: '/{resource}', name: 'react_admin_api_resource_list', methods: ['GET'])]
+    public function list(
+        string $resource,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $requestData = new ListDataRequest($request);
+        $entityClass = $this->getResourceEntityClass($resource);
+
+        $repository = $entityManager->getRepository($entityClass);
+        if (!$repository instanceof DataRepositoryListInterface) {
+            throw new \InvalidArgumentException('Repository does not implement DataRepositoryListInterface');
+        }
+
+        $responseData = $repository->list($requestData);
+
+        return $responseData->createResponse();
+    }
+
+    #[Route(path: '/{resource}', name: 'react_admin_api_resource_delete_many', methods: ['DELETE'])]
+    public function deleteMany(
+        string $resource,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $requestData = new DeleteManyDataRequest($request);
+        $entityClass = $this->getResourceEntityClass($resource);
+
+        $repository = $entityManager->getRepository($entityClass);
+        if (!$repository instanceof DataRepositoryDeleteInterface) {
+            throw new \InvalidArgumentException('Repository does not implement DataRepositoryDeleteInterface');
+        }
+
+        $responseData = $repository->deleteMany($requestData);
+
+        return $responseData->createResponse();
+    }
+
+    #[Route(path: '/{resource}/{id}', name: 'react_admin_api_resource_get', methods: ['GET'])]
+    public function getEntity(
+        string $resource,
+        string $id,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $entityClass = $this->getResourceEntityClass($resource);
+        $repository = $entityManager->getRepository($entityClass);
+        if (!$repository instanceof DataRepositoryFindInterface) {
+            throw new \LogicException(sprintf('Repository %s must implement %s to use findWithDto method', get_class($repository), DataRepositoryFindInterface::class));
+        }
+
+        $entity = $repository->findWithDto($id);
+
+        if (!$entity) {
+            return new JsonResponse(
+                ['error' => 'Entity not found'],
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        return new JsonResponse(
+            $entity->toArray(),
+        );
+    }
+
+    #[Route(path: '/{resource}', name: 'react_admin_api_resource_create', methods: ['POST'])]
+    public function create(
+        string $resource,
+        DenormalizerInterface $denormalizer,
+        Request $request,
+        ValidatorInterface $validator,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        if (null === $data) {
+            return new JsonResponse(
+                ['error' => 'Invalid JSON provided'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $resourceDtoClass = $this->getResourceDtoClass($resource);
+        $entityClass = $this->getResourceEntityClass($resource);
+
+        $dataDto = $denormalizer->denormalize($data, $resourceDtoClass);
+        $requestData = new CreateDataRequest($dataDto);
+
+        $repository = $entityManager->getRepository($entityClass);
+        if (!$repository instanceof DataRepositoryCreateInterface) {
+            throw new \InvalidArgumentException('Repository does not implement DataRepositoryCreateInterface');
+        }
+
+        $responseData = $repository->create($requestData);
+
+        return $responseData->createResponse();
+    }
+
+    #[Route(path: '/{resource}/{id}', name: 'react_admin_api_resource_update', methods: ['PUT'])]
+    public function update(
+        string $resource,
+        string $id,
+        DenormalizerInterface $denormalizer,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+        if (null === $data) {
+            return new JsonResponse(
+                ['error' => 'Invalid JSON provided'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $resourceDtoClass = $this->getResourceDtoClass($resource);
+        $entityClass = $this->getResourceEntityClass($resource);
+
+        $dataDto = $denormalizer->denormalize($data, $resourceDtoClass);
+        $requestData = new UpdateDataRequest($id, $dataDto);
+
+        $repository = $entityManager->getRepository($entityClass);
+        if (!$repository instanceof DataRepositoryUpdateInterface) {
+            throw new \InvalidArgumentException('Repository does not implement DataRepositoryUpdateInterface');
+        }
+
+        $responseData = $repository->update($requestData);
+
+        return $responseData->createResponse();
+    }
+
+    #[Route(path: '/{resource}/{id}', name: 'react_admin_api_resource_delete', methods: ['DELETE'])]
+    public function delete(
+        string $resource,
+        string $id,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        $entityClass = $this->getResourceEntityClass($resource);
+
+        $repository = $entityManager->getRepository($entityClass);
+        if (!$repository instanceof DataRepositoryDeleteInterface) {
+            throw new \InvalidArgumentException('Repository does not implement DataRepositoryDeleteInterface');
+        }
+
+        $responseData = $repository->delete(new DeleteDataRequest($id));
+
+        return $responseData->createResponse();
+    }
+
+    /**
+     * Get the resource entity class for the given resource path.
+     *
+     * @return class-string
+     */
+    private function getResourceEntityClass(string $resource): string
+    {
+        $dtoClass = $this->getResourceDtoClass($resource);
+        
+        return $dtoClass::getMappedEntityClass();
+    }
+
+    /**
+     * Get the resource DTO class for the given resource path.
+     *
+     * @return class-string<DtoInterface>
+     */
+    private function getResourceDtoClass(string $resource): string
+    {
+        $resourceConfig = $this->getResourceConfig($resource);
+        
+        $resourceDtoClass = $resourceConfig['dto_class'];
+        if (!is_subclass_of($resourceDtoClass, DtoInterface::class)) {
+            throw new \LogicException('Resource DTO class must implement DtoInterface');
+        }
+        
+        return $resourceDtoClass;
+    }
+    
+    /**
+     * Get the resource configuration for the given resource path.
+     *
+     * @throws \InvalidArgumentException if the resource is not configured
+     * @return array{dto_class: class-string<DtoInterface>, repository: ?class-string}
+     */
+    private function getResourceConfig(string $resource): array
+    {
+        $resources = $this->getParameter('react_admin_api.resources');
+        
+        if (!is_array($resources) || !isset($resources[$resource])) {
+            throw new \InvalidArgumentException(sprintf('Resource path not configured: %s', $resource));
+        }
+        
+        return $resources[$resource];
+    }
+}

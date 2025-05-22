@@ -1,0 +1,25 @@
+services:
+    VLM\TaskWorkerBundle\Executor\Executor:
+        autowire: true
+        autoconfigure: true
+
+    VLM\TaskWorkerBundle\TaskWorker:
+        autowire: true
+        autoconfigure: true
+        arguments:
+            - '@monolog.logger'
+            - '@VLM\TaskWorkerBundle\Executor\Executor'
+        calls:
+            - method: 'registerAll'
+              arguments:
+                  - !tagged_iterator 'taskWorker.task'
+
+    VLM\TaskWorkerBundle\TaskWorkerInterface:
+        alias: VLM\TaskWorkerBundle\TaskWorker
+        public: true
+
+    VLM\TaskWorkerBundle\Command\RunCommand:
+        autowire: true
+        autoconfigure: true
+        public: true
+        tags: ['console.command']

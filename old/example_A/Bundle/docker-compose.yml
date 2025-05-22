@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+    php:
+        container_name: task-worker-bundle-php
+        image: docker-registry.vlp.cz:5000/php-8.2
+        environment:
+            - HTTP_PROXY=proxy.vlp.cz:3128
+            - HTTPS_PROXY=proxy.vlp.cz:3128
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./:/code:cached
+            - ~/.composer/cache:/root/.composer/cache:cached
+        working_dir: /code
+        tty: true
+        stdin_open: true

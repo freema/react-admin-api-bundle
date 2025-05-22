@@ -1,0 +1,13 @@
+services:
+  logger:
+    alias: 'monolog.logger'
+    public: true
+
+  VLM\TaskWorkerBundleDev\ExampleTask:
+    tags:
+      - { name: 'taskWorker.task' }
+    autowire: true
+    autoconfigure: true
+    arguments:
+      - '* * * * *'
+      - '@logger'

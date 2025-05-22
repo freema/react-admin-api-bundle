@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Controllers
+    Freema\ReactAdminApiBundle\Controller\:
+        resource: '../../Controller/'
+        tags: ['controller.service_arguments']
+        public: true
+
+    # Event listeners
+    Freema\ReactAdminApiBundle\EventListener\:
+        resource: '../../EventListener/'
+        tags: ['kernel.event_subscriber']

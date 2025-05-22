@@ -1,0 +1,34 @@
+# IDE & System Files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Composer
+/vendor/
+composer.phar
+
+# Symfony specific
+/dev/var/cache/*
+/dev/var/log/*
+/dev/var/sessions/*
+!dev/var/cache/.gitkeep
+!dev/var/log/.gitkeep
+!dev/var/sessions/.gitkeep
+
+# PHPUnit
+/phpunit.xml
+.phpunit.result.cache
+
+# PHP-CS-Fixer
+/.php-cs-fixer.cache
+
+# Docker
+/docker-compose.override.yml
+
+# Custom
+.env.local
+.env.*.local
+

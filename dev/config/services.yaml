@@ -1,0 +1,14 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+
+    # Register our custom repository manager for testing
+    Freema\ReactAdminApiBundle\Dev\Repository\RepositoryManager:
+        alias: 'doctrine.orm.entity_manager'
+        public: true
+        
+    # Register individual repositories as services for testing
+    Freema\ReactAdminApiBundle\Dev\Repository\UserRepository:
+        public: true

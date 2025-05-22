@@ -1,0 +1,114 @@
+image: docker-registry.vlp.cz:5000/php-8.2
+
+variables:
+    COMPOSER_CACHE_DIR: "${CI_PROJECT_DIR}/.composer-cache"
+    COMPOSER_ALLOW_SUPERUSER: 1
+    COMPOSER_NO_INTERACTION: 1
+    TEST_DIR: "${CI_PROJECT_DIR}/.symfony-test"
+
+cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+        - .composer-cache
+        - vendor/
+        - ${TEST_DIR}/vendor/
+
+.proxy-config: &proxy-config
+    before_script:
+        - export http_proxy=http://proxy.vlp.cz:3128
+        - export https_proxy=http://proxy.vlp.cz:3128
+        - export HTTP_PROXY=http://proxy.vlp.cz:3128
+        - export HTTPS_PROXY=http://proxy.vlp.cz:3128
+        - composer config -g http-basic.packagist.vlp.cz token token
+        - composer config -g repos.packagist.vlp composer https://packagist.vlp.cz
+        - composer config -g github-protocols https
+        - composer config -g secure-http false
+
+.base_test: &base_test
+    <<: *proxy-config
+    before_script:
+        - !reference [.proxy-config, before_script]
+
+.symfony_test: &symfony_test
+    before_script:
+        - !reference [.proxy-config, before_script]
+        - pwd
+        - echo "TEST_DIR=$TEST_DIR"
+        - rm -rf $TEST_DIR
+        - mkdir -p $TEST_DIR
+        - ls -la
+        - cp -r src tests dev $TEST_DIR/
+        - cp phpunit.xml.dist $TEST_DIR/phpunit.xml
+        - cp .env.test $TEST_DIR/ || true
+        - cp -r config $TEST_DIR/ || true
+        - ls -la $TEST_DIR
+
+stages:
+    - test
+    - compatibility
+    - quality
+
+test:unit:
+    <<: *base_test
+    stage: test
+    before_script:
+        - !reference [.proxy-config, before_script]
+        - composer install --prefer-dist --no-progress
+    script:
+        - vendor/bin/phpunit --coverage-text --colors=never
+
+test:symfony54:
+    <<: *symfony_test
+    stage: compatibility
+    script:
+        - cp test/symfony54/composer.json $TEST_DIR/composer.json
+        - cd $TEST_DIR
+        - pwd
+        - ls -la
+        - composer install --prefer-dist --no-progress
+        - vendor/bin/phpunit --testdox --colors=never
+
+test:symfony64:
+    <<: *symfony_test
+    stage: compatibility
+    script:
+        - cp test/symfony64/composer.json $TEST_DIR/composer.json
+        - cd $TEST_DIR
+        - pwd
+        - ls -la
+        - composer install --prefer-dist --no-progress
+        - vendor/bin/phpunit --colors=never
+
+test:symfony71:
+    <<: *symfony_test
+    stage: compatibility
+    script:
+        - cp test/symfony71/composer.json $TEST_DIR/composer.json
+        - cd $TEST_DIR
+        - pwd
+        - ls -la
+        - composer install --prefer-dist --no-progress
+        - vendor/bin/phpunit --colors=never
+
+quality:analysis:
+    <<: *base_test
+    stage: quality
+    before_script:
+        - composer install --prefer-dist --no-progress
+    script:
+        - vendor/bin/phpstan analyse src
+        - vendor/bin/php-cs-fixer fix --dry-run --diff
+
+pages:
+    <<: *base_test
+    stage: quality
+    before_script:
+        - !reference [.proxy-config, before_script]
+    script:
+        - mkdir -p public
+        - cp -r docs/* public/ || true
+    artifacts:
+        paths:
+            - public
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
