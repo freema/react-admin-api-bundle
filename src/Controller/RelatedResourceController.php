@@ -12,16 +12,20 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Freema\ReactAdminApiBundle\Dto\AdminApiDto;
-use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 use Freema\ReactAdminApiBundle\Interface\RelatedDataRepositoryListInterface;
 use Freema\ReactAdminApiBundle\Interface\RelatedEntityInterface;
 use Freema\ReactAdminApiBundle\Request\ListDataRequest;
+use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
 
 #[Route]
 class RelatedResourceController extends AbstractController implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    public function __construct(
+        private readonly ResourceConfigurationService $resourceConfig
+    ) {
+    }
 
     #[Route(path: '/{resource}/{id}/{relatedResource}', name: 'react_admin_api_related_resource_list', methods: ['GET'])]
     public function list(
@@ -70,42 +74,6 @@ class RelatedResourceController extends AbstractController implements LoggerAwar
      */
     private function getResourceEntityClass(string $resource): string
     {
-        $dtoClass = $this->getResourceDtoClass($resource);
-        
-        return $dtoClass::getMappedEntityClass();
-    }
-
-    /**
-     * Get the resource DTO class for the given resource path.
-     *
-     * @return class-string<DtoInterface>
-     */
-    private function getResourceDtoClass(string $resource): string
-    {
-        $resourceConfig = $this->getResourceConfig($resource);
-        
-        $resourceDtoClass = $resourceConfig['dto_class'];
-        if (!is_subclass_of($resourceDtoClass, DtoInterface::class)) {
-            throw new \LogicException('Resource DTO class must implement DtoInterface');
-        }
-        
-        return $resourceDtoClass;
-    }
-    
-    /**
-     * Get the resource configuration for the given resource path.
-     *
-     * @throws \InvalidArgumentException if the resource is not configured
-     * @return array{dto_class: class-string<DtoInterface>, repository: ?class-string}
-     */
-    private function getResourceConfig(string $resource): array
-    {
-        $resources = $this->getParameter('react_admin_api.resources');
-        
-        if (!is_array($resources) || !isset($resources[$resource])) {
-            throw new \InvalidArgumentException(sprintf('Resource path not configured: %s', $resource));
-        }
-        
-        return $resources[$resource];
+        return $this->resourceConfig->getResourceEntityClass($resource);
     }
 }

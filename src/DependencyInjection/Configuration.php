@@ -16,68 +16,59 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
-                ->arrayNode('routing')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('prefix')
-                            ->defaultValue('/api')
-                            ->info('Base prefix for all API routes')
-                        ->end()
-                        ->booleanNode('load_routes')
-                            ->defaultTrue()
-                            ->info('Whether to load the bundle routes automatically')
-                        ->end()
-                    ->end()
-                ->end()
                 ->arrayNode('resources')
+                    ->isRequired()
+                    ->requiresAtLeastOneElement()
                     ->useAttributeAsKey('path')
+                    ->info('Resource configuration mapping resource paths to DTOs')
                     ->arrayPrototype()
                         ->children()
                             ->scalarNode('dto_class')
                                 ->isRequired()
                                 ->cannotBeEmpty()
-                                ->info('The DTO class for this resource that implements DtoInterface')
-                            ->end()
-                            ->scalarNode('repository')
-                                ->defaultNull()
-                                ->info('Optional custom repository service ID')
-                            ->end()
-                            ->arrayNode('operations')
-                                ->addDefaultsIfNotSet()
-                                ->children()
-                                    ->booleanNode('list')->defaultTrue()->end()
-                                    ->booleanNode('get')->defaultTrue()->end()
-                                    ->booleanNode('create')->defaultTrue()->end()
-                                    ->booleanNode('update')->defaultTrue()->end()
-                                    ->booleanNode('delete')->defaultTrue()->end()
-                                    ->booleanNode('delete_many')->defaultTrue()->end()
+                                ->info('The DTO class for this resource that extends AdminApiDto and implements DtoInterface')
+                                ->validate()
+                                    ->ifString()
+                                    ->then(function ($v) {
+                                        if (!class_exists($v)) {
+                                            throw new \InvalidArgumentException(sprintf('DTO class "%s" does not exist', $v));
+                                        }
+                                        if (!is_subclass_of($v, 'Freema\ReactAdminApiBundle\Interface\DtoInterface')) {
+                                            throw new \InvalidArgumentException(sprintf('DTO class "%s" must implement DtoInterface', $v));
+                                        }
+                                        return $v;
+                                    })
                                 ->end()
                             ->end()
                             ->arrayNode('related_resources')
                                 ->useAttributeAsKey('path')
+                                ->info('Configuration for related resources accessible via /{resource}/{id}/{related_resource}')
                                 ->arrayPrototype()
                                     ->children()
                                         ->scalarNode('dto_class')
                                             ->isRequired()
                                             ->cannotBeEmpty()
                                             ->info('The DTO class for the related resource')
+                                            ->validate()
+                                                ->ifString()
+                                                ->then(function ($v) {
+                                                    if (!class_exists($v)) {
+                                                        throw new \InvalidArgumentException(sprintf('Related DTO class "%s" does not exist', $v));
+                                                    }
+                                                    if (!is_subclass_of($v, 'Freema\ReactAdminApiBundle\Interface\DtoInterface')) {
+                                                        throw new \InvalidArgumentException(sprintf('Related DTO class "%s" must implement DtoInterface', $v));
+                                                    }
+                                                    return $v;
+                                                })
+                                            ->end()
                                         ->end()
-                                        ->scalarNode('repository')
+                                        ->scalarNode('relationship_method')
                                             ->defaultNull()
-                                            ->info('Optional custom repository service ID for the related resource')
+                                            ->info('Method name on parent entity to get related entities (e.g. "getPosts")')
                                         ->end()
                                     ->end()
                                 ->end()
                             ->end()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('repository_manager')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('service')
-                            ->defaultValue('doctrine.orm.entity_manager')
-                            ->info('Service ID for the repository manager (always Doctrine entity manager)')
                         ->end()
                     ->end()
                 ->end()

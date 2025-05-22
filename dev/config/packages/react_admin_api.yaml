@@ -1,20 +1,13 @@
 react_admin_api:
-    routing:
-        prefix: '/api'
-        load_routes: true
     resources:
+        # Jednoduché mapování: resource path => DTO class
+        # Vše ostatní se odvozuje automaticky:
+        # - Entity class z DTO->getMappedEntityClass()
+        # - Repository z EntityManager->getRepository(entityClass)
+        # - Dostupné operace z implementovaných interfaces na repository
         users:
             dto_class: 'Freema\ReactAdminApiBundle\Dev\Dto\UserDto'
-            operations:
-                list: true
-                get: true
-                create: true
-                update: true
-                delete: true
-                delete_many: true
-        # You can add related resources like:
-        # projects:
-        #     dto_class: 'Freema\ReactAdminApiBundle\Dev\Dto\ProjectDto'
-        #     related_resources:
-        #         users:
-        #             dto_class: 'Freema\ReactAdminApiBundle\Dev\Dto\UserDto'
+            # related_resources:
+            #     posts:
+            #         dto_class: 'App\Dto\PostDto'
+            #         relationship_method: 'getPosts'

@@ -45,7 +45,7 @@ class ListDataResult
 
         return new JsonResponse([
             'data' => $responseData,
-            'total' => $this->total,
+            'total' => $this->getTotal(),
         ]);
     }
 }

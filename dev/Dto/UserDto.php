@@ -32,7 +32,7 @@ class UserDto extends AdminApiDto
         $dto->name = $entity->getName();
         $dto->email = $entity->getEmail();
         $dto->roles = $entity->getRoles();
-        $dto->createdAt = $entity->getCreatedAt();
+        $dto->createdAt = $entity->getCreatedAt()?->format('Y-m-d H:i:s');
 
         return $dto;
     }

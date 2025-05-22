@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Freema\ReactAdminApiBundle\Dev;
 
+use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\MonologBundle\MonologBundle;
@@ -22,6 +23,7 @@ class DevKernel extends Kernel
         return [
             new FrameworkBundle(),
             new MonologBundle(),
+            new DoctrineBundle(),
             new ReactAdminApiBundle(),
         ];
     }
@@ -56,6 +58,7 @@ class DevKernel extends Kernel
         ]);
 
         $loader->load(__DIR__.'/config/services.yaml');
+        $loader->load(__DIR__.'/config/packages/*.yaml', 'glob');
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void

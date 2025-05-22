@@ -6,9 +6,10 @@ namespace Freema\ReactAdminApiBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\DependencyInjection\Reference;
+use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
 
 class ReactAdminApiExtension extends Extension
 {
@@ -19,8 +20,11 @@ class ReactAdminApiExtension extends Extension
         
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
-        dump($config);
-        die();
+        
+        // Create ResourceConfigurationService with resource configuration
+        $resourceConfigServiceDefinition = new Definition(ResourceConfigurationService::class);
+        $resourceConfigServiceDefinition->setArguments([$config['resources']]);
+        $container->setDefinition(ResourceConfigurationService::class, $resourceConfigServiceDefinition);
     }
     
     public function getAlias(): string

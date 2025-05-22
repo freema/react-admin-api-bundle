@@ -5,12 +5,12 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Freema\\ReactAdminApiBundle\\": "src/",
-            "Freema\\ReactAdminApiBundle\\Dev\\": "dev/"
+            "Freema\\ReactAdminApiBundle\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
+            "Freema\\ReactAdminApiBundle\\Dev\\": "dev/",
             "Freema\\ReactAdminApiBundle\\Tests\\": "tests/"
         }
     },
