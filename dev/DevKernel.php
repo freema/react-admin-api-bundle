@@ -31,7 +31,7 @@ class DevKernel extends Kernel
     protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
         $container->loadFromExtension('framework', [
-            'test' => true,
+            'test' => false,
             'router' => [
                 'utf8' => true,
             ],
@@ -50,6 +50,10 @@ class DevKernel extends Kernel
 
 
         $container->loadFromExtension('react_admin_api', [
+            'exception_listener' => [
+                'enabled' => false,
+                'debug_mode' => false,
+            ],
             'resources' => [
                 'users' => [
                     'dto_class' => 'Freema\ReactAdminApiBundle\Dev\Dto\UserDto',

@@ -5,6 +5,9 @@ require_once dirname(__DIR__).'/vendor/autoload.php';
 use Freema\ReactAdminApiBundle\Dev\DevKernel;
 use Freema\ReactAdminApiBundle\Dev\DataFixtures;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\ErrorHandler\Debug;
+
+Debug::enable();
 
 $kernel = new DevKernel('dev', true);
 $kernel->boot();

@@ -9,7 +9,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
+use Freema\ReactAdminApiBundle\EventListener\ApiExceptionListener;
 
 class ReactAdminApiExtension extends Extension
 {
@@ -25,6 +27,19 @@ class ReactAdminApiExtension extends Extension
         $resourceConfigServiceDefinition = new Definition(ResourceConfigurationService::class);
         $resourceConfigServiceDefinition->setArguments([$config['resources']]);
         $container->setDefinition(ResourceConfigurationService::class, $resourceConfigServiceDefinition);
+        
+        // Conditionally register ApiExceptionListener based on configuration
+        if ($config['exception_listener']['enabled']) {
+            $apiExceptionListenerDefinition = new Definition(ApiExceptionListener::class);
+            $apiExceptionListenerDefinition->setArguments([
+                new Reference('router'),
+                $config['exception_listener']['enabled'],
+                $config['exception_listener']['debug_mode'],
+            ]);
+            $apiExceptionListenerDefinition->addMethodCall('setLogger', [new Reference('logger')]);
+            $apiExceptionListenerDefinition->addTag('kernel.event_subscriber');
+            $container->setDefinition(ApiExceptionListener::class, $apiExceptionListenerDefinition);
+        }
     }
     
     public function getAlias(): string

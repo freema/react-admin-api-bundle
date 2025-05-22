@@ -9,8 +9,3 @@ services:
         resource: '../../Controller/'
         tags: ['controller.service_arguments']
         public: true
-
-    # Event listeners
-    Freema\ReactAdminApiBundle\EventListener\:
-        resource: '../../EventListener/'
-        tags: ['kernel.event_subscriber']

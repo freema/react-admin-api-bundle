@@ -7,6 +7,7 @@ namespace Freema\ReactAdminApiBundle\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +26,7 @@ class RelatedResourceController extends AbstractController implements LoggerAwar
     public function __construct(
         private readonly ResourceConfigurationService $resourceConfig
     ) {
+        $this->setLogger(new NullLogger());
     }
 
     #[Route(path: '/{resource}/{id}/{relatedResource}', name: 'react_admin_api_related_resource_list', methods: ['GET'])]
