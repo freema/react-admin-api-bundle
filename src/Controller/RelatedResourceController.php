@@ -16,6 +16,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Freema\ReactAdminApiBundle\Interface\RelatedDataRepositoryListInterface;
 use Freema\ReactAdminApiBundle\Interface\RelatedEntityInterface;
 use Freema\ReactAdminApiBundle\Request\ListDataRequest;
+use Freema\ReactAdminApiBundle\Request\ListDataRequestFactory;
 use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
 
 #[Route]
@@ -24,7 +25,8 @@ class RelatedResourceController extends AbstractController implements LoggerAwar
     use LoggerAwareTrait;
 
     public function __construct(
-        private readonly ResourceConfigurationService $resourceConfig
+        private readonly ResourceConfigurationService $resourceConfig,
+        private readonly ListDataRequestFactory $listDataRequestFactory
     ) {
         $this->setLogger(new NullLogger());
     }
@@ -37,7 +39,7 @@ class RelatedResourceController extends AbstractController implements LoggerAwar
         EntityManagerInterface $entityManager,
         Request $request
     ): JsonResponse {
-        $requestData = new ListDataRequest($request);
+        $requestData = $this->listDataRequestFactory->createFromRequest($request);
         
         // Get parent entity
         $resourceEntityClass = $this->getResourceEntityClass($resource);

@@ -85,6 +85,41 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('providers')
+                    ->addDefaultsIfNotSet()
+                    ->info('Configuration for request providers')
+                    ->children()
+                        ->arrayNode('list_data_request')
+                            ->useAttributeAsKey('name')
+                            ->info('Additional list data request providers')
+                            ->arrayPrototype()
+                                ->children()
+                                    ->scalarNode('class')
+                                        ->isRequired()
+                                        ->cannotBeEmpty()
+                                        ->info('The provider class that implements ListDataRequestProviderInterface')
+                                        ->validate()
+                                            ->ifString()
+                                            ->then(function ($v) {
+                                                if (!class_exists($v)) {
+                                                    throw new \InvalidArgumentException(sprintf('Provider class "%s" does not exist', $v));
+                                                }
+                                                if (!is_subclass_of($v, 'Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderInterface')) {
+                                                    throw new \InvalidArgumentException(sprintf('Provider class "%s" must implement ListDataRequestProviderInterface', $v));
+                                                }
+                                                return $v;
+                                            })
+                                        ->end()
+                                    ->end()
+                                    ->integerNode('priority')
+                                        ->defaultValue(0)
+                                        ->info('Priority of the provider (higher = checked first)')
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

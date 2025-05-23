@@ -25,6 +25,7 @@ use Freema\ReactAdminApiBundle\Request\CreateDataRequest;
 use Freema\ReactAdminApiBundle\Request\DeleteDataRequest;
 use Freema\ReactAdminApiBundle\Request\DeleteManyDataRequest;
 use Freema\ReactAdminApiBundle\Request\ListDataRequest;
+use Freema\ReactAdminApiBundle\Request\ListDataRequestFactory;
 use Freema\ReactAdminApiBundle\Request\UpdateDataRequest;
 use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
 
@@ -34,7 +35,8 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     use LoggerAwareTrait;
 
     public function __construct(
-        private readonly ResourceConfigurationService $resourceConfig
+        private readonly ResourceConfigurationService $resourceConfig,
+        private readonly ListDataRequestFactory $listDataRequestFactory
     ) {
         $this->setLogger(new NullLogger());
     }
@@ -45,7 +47,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         Request $request,
         EntityManagerInterface $entityManager
     ): JsonResponse {
-        $requestData = new ListDataRequest($request);
+        $requestData = $this->listDataRequestFactory->createFromRequest($request);
         $entityClass = $this->getResourceEntityClass($resource);
 
         $repository = $entityManager->getRepository($entityClass);

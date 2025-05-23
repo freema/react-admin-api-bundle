@@ -24,8 +24,8 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
 
     public function __construct(
         private readonly RouterInterface $router,
-        private readonly bool $enabled = true,
-        private readonly bool $debugMode = false,
+        private readonly bool $enabled,
+        private readonly bool $debugMode,
     ) {
         $this->setLogger(new NullLogger());
     }

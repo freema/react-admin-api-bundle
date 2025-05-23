@@ -9,3 +9,23 @@ services:
         resource: '../../Controller/'
         tags: ['controller.service_arguments']
         public: true
+
+    # Request Providers
+    Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderManager:
+        public: true
+
+    Freema\ReactAdminApiBundle\Request\Provider\List\RestProvider:
+        tags:
+            - { name: 'react_admin_api.list_data_request_provider' }
+
+    Freema\ReactAdminApiBundle\Request\Provider\List\CustomProvider:
+        tags:
+            - { name: 'react_admin_api.list_data_request_provider' }
+    
+    # Request Factory
+    Freema\ReactAdminApiBundle\Request\ListDataRequestFactory:
+        public: true
+
+    # Services
+    Freema\ReactAdminApiBundle\Service\:
+        resource: '../../Service/'

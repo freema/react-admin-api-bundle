@@ -12,6 +12,8 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
 use Freema\ReactAdminApiBundle\EventListener\ApiExceptionListener;
+use Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderInterface;
+use Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderManager;
 
 class ReactAdminApiExtension extends Extension
 {
@@ -27,7 +29,7 @@ class ReactAdminApiExtension extends Extension
         $resourceConfigServiceDefinition = new Definition(ResourceConfigurationService::class);
         $resourceConfigServiceDefinition->setArguments([$config['resources']]);
         $container->setDefinition(ResourceConfigurationService::class, $resourceConfigServiceDefinition);
-        
+
         // Conditionally register ApiExceptionListener based on configuration
         if ($config['exception_listener']['enabled']) {
             $apiExceptionListenerDefinition = new Definition(ApiExceptionListener::class);
@@ -39,6 +41,19 @@ class ReactAdminApiExtension extends Extension
             $apiExceptionListenerDefinition->addMethodCall('setLogger', [new Reference('logger')]);
             $apiExceptionListenerDefinition->addTag('kernel.event_subscriber');
             $container->setDefinition(ApiExceptionListener::class, $apiExceptionListenerDefinition);
+        }
+
+        // Register providers to the manager
+        $container->registerForAutoconfiguration(ListDataRequestProviderInterface::class)
+            ->addTag('react_admin_api.list_data_request_provider');
+            
+        // Register custom providers from configuration
+        if (!empty($config['providers']['list_data_request'])) {
+            foreach ($config['providers']['list_data_request'] as $name => $providerConfig) {
+                $definition = new Definition($providerConfig['class']);
+                $definition->addTag('react_admin_api.list_data_request_provider', ['priority' => $providerConfig['priority']]);
+                $container->setDefinition('react_admin_api.provider.list_data_request.' . $name, $definition);
+            }
         }
     }
     
