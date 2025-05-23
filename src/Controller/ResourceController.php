@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Freema\ReactAdminApiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;

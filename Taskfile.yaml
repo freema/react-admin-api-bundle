@@ -107,6 +107,28 @@ tasks:
     cmd: 'docker exec -it {{ .CONTAINER_NAME }} vendor/bin/phpunit'
     aliases: ['t']
   
+  # React Admin Development
+  admin:dev:
+    desc: 'Start React Admin development server'
+    cmd: 'cd dev/admin-app && npm run dev'
+    aliases: ['admin']
+
+  admin:install:
+    desc: 'Install React Admin dependencies'
+    cmd: 'cd dev/admin-app && npm install'
+
+  admin:build:
+    desc: 'Build React Admin for production'
+    cmd: 'cd dev/admin-app && npm run build'
+
+  # Start both API and Admin together
+  dev:
+    desc: 'Start both API server and React Admin dev server'
+    cmds:
+      - task: dev:serve &
+      - task: admin:dev
+    aliases: ['start']
+
   # Setup task
   setup:
     desc: 'Setup project (start docker, install dependencies)'
