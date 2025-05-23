@@ -33,9 +33,9 @@ trait ListTrait
         }
         
         // Apply pagination
-        if ($dataRequest->getPage() !== null && $dataRequest->getPerPage() !== null) {
-            $qb->setFirstResult(($dataRequest->getPage() - 1) * $dataRequest->getPerPage());
-            $qb->setMaxResults($dataRequest->getPerPage());
+        if ($dataRequest->getOffset() !== null && $dataRequest->getLimit() !== null) {
+            $qb->setFirstResult($dataRequest->getOffset());
+            $qb->setMaxResults($dataRequest->getLimit());
         }
         
         $entities = $qb->getQuery()->getResult();
