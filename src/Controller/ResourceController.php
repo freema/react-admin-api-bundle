@@ -84,6 +84,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
             $responseData->getTotal()
         ));
         $response->headers->set('X-Content-Range', (string) $responseData->getTotal());
+        $response->headers->set('Access-Control-Expose-Headers', 'Content-Range, X-Content-Range');
 
         return $response;
     }

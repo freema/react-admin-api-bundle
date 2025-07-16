@@ -32,10 +32,9 @@ class SimpleRestDataProvider extends AbstractDataProvider
 
     public function transformResponse(array $data, int $total): array
     {
-        return [
-            'data' => $data,
-            'total' => $total,
-        ];
+        // Simple REST provider expects data directly as array, not wrapped in object
+        // The total count is communicated via Content-Range header
+        return $data;
     }
 
     public function getType(): string

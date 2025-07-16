@@ -61,6 +61,11 @@ trait ListTrait
                 continue;
             }
             
+            // Skip 'q' parameter as it's handled separately for full-text search
+            if ($field === 'q') {
+                continue;
+            }
+            
             $qb->andWhere("e.$field LIKE :$field")
                 ->setParameter($field, '%' . $value . '%');
         }
