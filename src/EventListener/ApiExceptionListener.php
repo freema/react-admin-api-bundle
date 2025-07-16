@@ -79,7 +79,8 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
         } elseif ($exception instanceof ValidationException) {
             $statusCode = Response::HTTP_BAD_REQUEST;
             $responseData = [
-                'error' => 'Validation failed',
+                'error' => 'VALIDATION_ERROR',
+                'message' => 'Validation failed',
                 'errors' => $exception->getErrors(),
             ];
         } elseif ($exception instanceof \InvalidArgumentException) {

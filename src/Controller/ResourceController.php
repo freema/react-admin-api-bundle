@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Freema\ReactAdminApiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Freema\ReactAdminApiBundle\Exception\ValidationException;
 use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -153,6 +154,13 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         $entityClass = $this->getResourceEntityClass($resource);
 
         $dataDto = $this->dtoFactory->createFromArray($data, $resourceDtoClass);
+        
+        // Validate the DTO
+        $violations = $validator->validate($dataDto);
+        if (count($violations) > 0) {
+            throw new ValidationException($violations);
+        }
+        
         $requestData = new CreateDataRequest($dataDto);
 
         $repository = $entityManager->getRepository($entityClass);
@@ -170,6 +178,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         string $resource,
         string $id,
         Request $request,
+        ValidatorInterface $validator,
         EntityManagerInterface $entityManager
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
@@ -184,6 +193,13 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         $entityClass = $this->getResourceEntityClass($resource);
 
         $dataDto = $this->dtoFactory->createFromArray($data, $resourceDtoClass);
+        
+        // Validate the DTO
+        $violations = $validator->validate($dataDto);
+        if (count($violations) > 0) {
+            throw new ValidationException($violations);
+        }
+        
         $requestData = new UpdateDataRequest($id, $dataDto);
 
         $repository = $entityManager->getRepository($entityClass);
