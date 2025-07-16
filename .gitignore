@@ -21,6 +21,7 @@ composer.phar
 # PHPUnit
 /phpunit.xml
 .phpunit.result.cache
+.phpunit.cache/
 
 # PHP-CS-Fixer
 /.php-cs-fixer.cache
