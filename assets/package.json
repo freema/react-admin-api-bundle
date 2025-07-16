@@ -1,0 +1,44 @@
+{
+  "name": "@freema/react-admin-api-bundle",
+  "version": "1.0.0",
+  "description": "Frontend assets for React Admin API Bundle",
+  "main": "dist/data-provider.js",
+  "types": "dist/data-provider.d.ts",
+  "files": [
+    "dist/**/*",
+    "src/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts"
+  },
+  "keywords": [
+    "react-admin",
+    "symfony",
+    "bundle",
+    "data-provider"
+  ],
+  "author": "React Admin API Bundle",
+  "license": "MIT",
+  "peerDependencies": {
+    "ra-core": "^5.0.0",
+    "react-admin": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "prettier": "^3.0.0",
+    "ra-core": "^5.0.0",
+    "react-admin": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}

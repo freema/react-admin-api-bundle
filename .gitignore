@@ -32,3 +32,8 @@ composer.phar
 .env.local
 .env.*.local
 
+# Assets
+/assets/node_modules/
+/assets/package-lock.json
+/assets/yarn.lock
+
