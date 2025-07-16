@@ -120,6 +120,21 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('data_provider')
+                    ->addDefaultsIfNotSet()
+                    ->info('Data provider configuration')
+                    ->children()
+                        ->enumNode('type')
+                            ->values(['custom', 'simple_rest'])
+                            ->defaultValue('custom')
+                            ->info('Type of data provider to use (custom = default bundle format, simple_rest = ra-data-simple-rest compatible)')
+                        ->end()
+                        ->arrayNode('options')
+                            ->info('Provider-specific options')
+                            ->prototype('variable')->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

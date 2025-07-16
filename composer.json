@@ -40,5 +40,13 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": "true",
+            "assets": {
+                "install-strategy": "copy"
+            }
+        }
     }
 }

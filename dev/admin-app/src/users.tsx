@@ -13,11 +13,27 @@ import {
   ChipField,
   SingleFieldList,
   DateField,
+  EditButton,
+  DeleteButton,
+  ShowButton,
+  SelectInput,
+  CheckboxGroupInput,
 } from 'react-admin';
 
+const userFilters = [
+  <TextInput source="q" label="Search" alwaysOn />,
+  <TextInput source="name" />,
+  <TextInput source="email" />,
+  <SelectInput source="roles" choices={[
+    { id: 'ROLE_USER', name: 'User' },
+    { id: 'ROLE_ADMIN', name: 'Admin' },
+    { id: 'ROLE_MANAGER', name: 'Manager' },
+  ]} />,
+];
+
 export const UserList = () => (
-  <List>
-    <Datagrid rowClick="edit">
+  <List filters={userFilters}>
+    <Datagrid>
       <TextField source="id" />
       <TextField source="name" />
       <EmailField source="email" />
@@ -27,6 +43,9 @@ export const UserList = () => (
         </SingleFieldList>
       </ArrayField>
       <DateField source="createdAt" />
+      <ShowButton />
+      <EditButton />
+      <DeleteButton />
     </Datagrid>
   </List>
 );
@@ -36,7 +55,11 @@ export const UserEdit = () => (
     <SimpleForm>
       <TextInput source="name" required />
       <TextInput source="email" type="email" required />
-      <TextInput source="roles" helperText="Comma-separated roles" />
+      <CheckboxGroupInput source="roles" choices={[
+        { id: 'ROLE_USER', name: 'User' },
+        { id: 'ROLE_ADMIN', name: 'Admin' },
+        { id: 'ROLE_MANAGER', name: 'Manager' },
+      ]} />
     </SimpleForm>
   </Edit>
 );
@@ -46,7 +69,11 @@ export const UserCreate = () => (
     <SimpleForm>
       <TextInput source="name" required />
       <TextInput source="email" type="email" required />
-      <TextInput source="roles" helperText="Comma-separated roles" defaultValue="ROLE_USER" />
+      <CheckboxGroupInput source="roles" choices={[
+        { id: 'ROLE_USER', name: 'User' },
+        { id: 'ROLE_ADMIN', name: 'Admin' },
+        { id: 'ROLE_MANAGER', name: 'Manager' },
+      ]} defaultValue={['ROLE_USER']} />
     </SimpleForm>
   </Create>
 );

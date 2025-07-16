@@ -8,15 +8,15 @@ namespace Freema\ReactAdminApiBundle\Request;
  * Unified request object for list operations.
  * This is the standardized output from all providers.
  */
-class ListDataRequest
+readonly class ListDataRequest
 {
     public function __construct(
-        private readonly ?int $limit = null,
-        private readonly ?int $offset = null,
-        private readonly ?string $sortField = null,
-        private readonly ?string $sortOrder = null,
-        private readonly ?string $filter = null,
-        private readonly array $filterValues = []
+        private ?int    $limit = null,
+        private ?int    $offset = null,
+        private ?string $sortField = null,
+        private ?string $sortOrder = null,
+        private ?string $filter = null,
+        private array   $filterValues = []
     ) {
     }
 

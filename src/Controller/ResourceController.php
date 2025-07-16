@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Freema\ReactAdminApiBundle\Service\DtoFactory;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryCreateInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryDeleteInterface;
@@ -28,6 +28,7 @@ use Freema\ReactAdminApiBundle\Request\ListDataRequest;
 use Freema\ReactAdminApiBundle\Request\ListDataRequestFactory;
 use Freema\ReactAdminApiBundle\Request\UpdateDataRequest;
 use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
+use Freema\ReactAdminApiBundle\DataProvider\DataProviderFactory;
 
 #[Route]
 class ResourceController extends AbstractController implements LoggerAwareInterface
@@ -36,7 +37,9 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
     public function __construct(
         private readonly ResourceConfigurationService $resourceConfig,
-        private readonly ListDataRequestFactory $listDataRequestFactory
+        private readonly ListDataRequestFactory $listDataRequestFactory,
+        private readonly DataProviderFactory $dataProviderFactory,
+        private readonly DtoFactory $dtoFactory
     ) {
         $this->setLogger(new NullLogger());
     }
@@ -47,7 +50,11 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         Request $request,
         EntityManagerInterface $entityManager
     ): JsonResponse {
-        $requestData = $this->listDataRequestFactory->createFromRequest($request);
+        // Get appropriate data provider for the request
+        $dataProvider = $this->dataProviderFactory->getProvider($request);
+        
+        // Transform request using data provider
+        $requestData = $dataProvider->transformListRequest($request);
         $entityClass = $this->getResourceEntityClass($resource);
 
         $repository = $entityManager->getRepository($entityClass);
@@ -57,7 +64,28 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
         $responseData = $repository->list($requestData);
 
-        return $responseData->createResponse();
+        // Transform response using data provider
+        $transformedData = $dataProvider->transformResponse(
+            $responseData->getData(),
+            $responseData->getTotal()
+        );
+
+        // Create response with Content-Range header for compatibility
+        $response = new JsonResponse($transformedData);
+        
+        // Calculate range from offset/limit
+        $offset = $requestData->getOffset() ?? 0;
+        $limit = $requestData->getLimit() ?? 10;
+        $endIndex = min($offset + $limit - 1, $responseData->getTotal() - 1);
+        
+        $response->headers->set('Content-Range', sprintf('items %d-%d/%d', 
+            $offset,
+            $endIndex,
+            $responseData->getTotal()
+        ));
+        $response->headers->set('X-Content-Range', (string) $responseData->getTotal());
+
+        return $response;
     }
 
     #[Route(path: '/{resource}', name: 'react_admin_api_resource_delete_many', methods: ['DELETE'])]
@@ -108,7 +136,6 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     #[Route(path: '/{resource}', name: 'react_admin_api_resource_create', methods: ['POST'])]
     public function create(
         string $resource,
-        DenormalizerInterface $denormalizer,
         Request $request,
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager
@@ -124,7 +151,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         $resourceDtoClass = $this->getResourceDtoClass($resource);
         $entityClass = $this->getResourceEntityClass($resource);
 
-        $dataDto = $denormalizer->denormalize($data, $resourceDtoClass);
+        $dataDto = $this->dtoFactory->createFromArray($data, $resourceDtoClass);
         $requestData = new CreateDataRequest($dataDto);
 
         $repository = $entityManager->getRepository($entityClass);
@@ -141,7 +168,6 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     public function update(
         string $resource,
         string $id,
-        DenormalizerInterface $denormalizer,
         Request $request,
         EntityManagerInterface $entityManager
     ): JsonResponse {
@@ -156,7 +182,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         $resourceDtoClass = $this->getResourceDtoClass($resource);
         $entityClass = $this->getResourceEntityClass($resource);
 
-        $dataDto = $denormalizer->denormalize($data, $resourceDtoClass);
+        $dataDto = $this->dtoFactory->createFromArray($data, $resourceDtoClass);
         $requestData = new UpdateDataRequest($id, $dataDto);
 
         $repository = $entityManager->getRepository($entityClass);

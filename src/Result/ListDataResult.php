@@ -43,9 +43,13 @@ class ListDataResult
             $responseData[] = $dto->toArray();
         }
 
-        return new JsonResponse([
+        $response = new JsonResponse([
             'data' => $responseData,
             'total' => $this->getTotal(),
         ]);
+        $response->headers->set('Content-Range', sprintf('items 0-%d/%d', count($this->data) - 1, $this->total));
+        $response->headers->set('Access-Control-Expose-Headers', 'Content-Range');
+
+        return $response;
     }
 }

@@ -14,6 +14,9 @@ use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
 use Freema\ReactAdminApiBundle\EventListener\ApiExceptionListener;
 use Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderInterface;
 use Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderManager;
+use Freema\ReactAdminApiBundle\DataProvider\DataProviderFactory;
+use Freema\ReactAdminApiBundle\DataProvider\CustomDataProvider;
+use Freema\ReactAdminApiBundle\DataProvider\SimpleRestDataProvider;
 
 class ReactAdminApiExtension extends Extension
 {
@@ -55,10 +58,34 @@ class ReactAdminApiExtension extends Extension
                 $container->setDefinition('react_admin_api.provider.list_data_request.' . $name, $definition);
             }
         }
+
+        // Register data providers
+        $this->registerDataProviders($container, $config['data_provider']);
     }
     
     public function getAlias(): string
     {
         return 'react_admin_api';
+    }
+
+    private function registerDataProviders(ContainerBuilder $container, array $config): void
+    {
+        // Register individual data providers
+        $customProviderDefinition = new Definition(CustomDataProvider::class);
+        $container->setDefinition(CustomDataProvider::class, $customProviderDefinition);
+
+        $simpleRestProviderDefinition = new Definition(SimpleRestDataProvider::class);
+        $container->setDefinition(SimpleRestDataProvider::class, $simpleRestProviderDefinition);
+
+        // Register data provider factory
+        $factoryDefinition = new Definition(DataProviderFactory::class);
+        $factoryDefinition->setArguments([
+            [
+                new Reference(SimpleRestDataProvider::class),
+                new Reference(CustomDataProvider::class), // Custom provider as fallback
+            ],
+            $config['type'] // Default provider type
+        ]);
+        $container->setDefinition(DataProviderFactory::class, $factoryDefinition);
     }
 }

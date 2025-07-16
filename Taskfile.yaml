@@ -121,13 +121,72 @@ tasks:
     desc: 'Build React Admin for production'
     cmd: 'cd dev/admin-app && npm run build'
 
-  # Start both API and Admin together
+  # Combined Development Tasks
   dev:
     desc: 'Start both API server and React Admin dev server'
     cmds:
-      - task: dev:serve &
+      - 'docker exec -d {{ .CONTAINER_NAME }} php -S 0.0.0.0:8080 -t dev/'
       - task: admin:dev
     aliases: ['start']
+
+  dev:with-assets:
+    desc: 'Start development with assets watching'
+    cmds:
+      - task: assets:build
+      - 'docker exec -d {{ .CONTAINER_NAME }} php -S 0.0.0.0:8080 -t dev/'
+      - task: assets:watch &
+      - task: admin:dev
+    aliases: ['dev:assets']
+
+  build:all:
+    desc: 'Build everything for production'
+    cmds:
+      - task: assets:build
+      - task: admin:build
+    aliases: ['build']
+
+  # Assets Management
+  assets:install:
+    desc: 'Install assets dependencies'
+    cmd: 'cd assets && npm install'
+    aliases: ['assets:i']
+
+  assets:build:
+    desc: 'Build assets for production'
+    cmds:
+      - task: assets:clean
+      - cd assets && npm run build
+    aliases: ['assets:b']
+
+  assets:watch:
+    desc: 'Watch assets for changes'
+    cmd: 'cd assets && npm run watch'
+    aliases: ['assets:w']
+
+  assets:clean:
+    desc: 'Clean assets dist folder'
+    cmd: 'cd assets && npm run clean'
+    aliases: ['assets:c']
+
+  assets:lint:
+    desc: 'Lint assets TypeScript files'
+    cmd: 'cd assets && npm run lint'
+    aliases: ['assets:l']
+
+  assets:lint:fix:
+    desc: 'Fix assets linting issues'
+    cmd: 'cd assets && npm run lint:fix'
+    aliases: ['assets:lf']
+
+  assets:format:
+    desc: 'Format assets TypeScript files'
+    cmd: 'cd assets && npm run format'
+    aliases: ['assets:f']
+
+  assets:format:check:
+    desc: 'Check assets formatting'
+    cmd: 'cd assets && npm run format:check'
+    aliases: ['assets:fc']
 
   # Setup task
   setup:
@@ -135,6 +194,7 @@ tasks:
     cmds:
       - task: up
       - task: composer:install
+      - task: assets:install
     aliases: ['init']
   
   default:
