@@ -13,12 +13,12 @@ use Symfony\Component\HttpFoundation\Response;
 class DeleteDataResult
 {
     /**
-     * @param bool $status Whether the operation was successful
+     * @param bool          $status        Whether the operation was successful
      * @param array<string> $errorMessages Error messages if the operation failed
      */
     public function __construct(
         private bool $status,
-        private array $errorMessages = []
+        private array $errorMessages = [],
     ) {
     }
 

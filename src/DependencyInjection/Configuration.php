@@ -49,6 +49,7 @@ class Configuration implements ConfigurationInterface
                                         if (!is_subclass_of($v, 'Freema\ReactAdminApiBundle\Interface\DtoInterface')) {
                                             throw new \InvalidArgumentException(sprintf('DTO class "%s" must implement DtoInterface', $v));
                                         }
+
                                         return $v;
                                     })
                                 ->end()
@@ -71,6 +72,7 @@ class Configuration implements ConfigurationInterface
                                                     if (!is_subclass_of($v, 'Freema\ReactAdminApiBundle\Interface\DtoInterface')) {
                                                         throw new \InvalidArgumentException(sprintf('Related DTO class "%s" must implement DtoInterface', $v));
                                                     }
+
                                                     return $v;
                                                 })
                                             ->end()
@@ -107,6 +109,7 @@ class Configuration implements ConfigurationInterface
                                                 if (!is_subclass_of($v, 'Freema\ReactAdminApiBundle\Request\Provider\List\ListDataRequestProviderInterface')) {
                                                     throw new \InvalidArgumentException(sprintf('Provider class "%s" must implement ListDataRequestProviderInterface', $v));
                                                 }
+
                                                 return $v;
                                             })
                                         ->end()

@@ -18,7 +18,7 @@ class ListDataRequestProviderManager
     {
         $this->providers[] = $provider;
         // Sort by priority (higher priority first)
-        usort($this->providers, fn($a, $b) => $b->getPriority() <=> $a->getPriority());
+        usort($this->providers, fn ($a, $b) => $b->getPriority() <=> $a->getPriority());
     }
 
     public function createRequestFromHttpRequest(Request $request): ListDataRequest
@@ -29,8 +29,8 @@ class ListDataRequestProviderManager
             }
         }
 
-        throw new \RuntimeException('No provider found for the given request. Available providers: ' . 
-            implode(', ', array_map(fn($p) => $p->getName(), $this->providers)));
+        throw new \RuntimeException('No provider found for the given request. Available providers: '.
+            implode(', ', array_map(fn ($p) => $p->getName(), $this->providers)));
     }
 
     public function getProviders(): array

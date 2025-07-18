@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 class ListDataRequestFactory
 {
     public function __construct(
-        private readonly ListDataRequestProviderManager $providerManager
+        private readonly ListDataRequestProviderManager $providerManager,
     ) {
     }
 

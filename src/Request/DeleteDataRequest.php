@@ -29,7 +29,7 @@ class DeleteDataRequest
     /**
      * Create a result from this request.
      *
-     * @param bool $status Whether the operation was successful
+     * @param bool          $status        Whether the operation was successful
      * @param array<string> $errorMessages Error messages if the operation failed
      */
     public function createResult(bool $status = true, array $errorMessages = []): DeleteDataResult

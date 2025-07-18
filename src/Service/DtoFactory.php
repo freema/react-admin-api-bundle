@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Freema\ReactAdminApiBundle\Service;
 
-use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 use Freema\ReactAdminApiBundle\Exception\DtoClassNotFoundException;
-use Freema\ReactAdminApiBundle\Exception\DtoInterfaceNotImplementedException;
 use Freema\ReactAdminApiBundle\Exception\DtoCreationException;
-use ReflectionClass;
-use ReflectionProperty;
+use Freema\ReactAdminApiBundle\Exception\DtoInterfaceNotImplementedException;
+use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 
 /**
  * Factory for creating DTO instances from array data
@@ -18,9 +16,10 @@ class DtoFactory
 {
     /**
      * Create DTO instance from array data
-     * 
-     * @param array<string, mixed> $data
+     *
+     * @param array<string, mixed>       $data
      * @param class-string<DtoInterface> $dtoClass
+     *
      * @return DtoInterface
      */
     public function createFromArray(array $data, string $dtoClass): DtoInterface
@@ -34,16 +33,16 @@ class DtoFactory
         }
 
         try {
-            $reflection = new ReflectionClass($dtoClass);
+            $reflection = new \ReflectionClass($dtoClass);
             $dto = $reflection->newInstance();
 
             foreach ($data as $property => $value) {
                 if ($reflection->hasProperty($property)) {
                     $reflectionProperty = $reflection->getProperty($property);
-                    
+
                     // Make property accessible
                     $reflectionProperty->setAccessible(true);
-                    
+
                     // Set the value
                     $reflectionProperty->setValue($dto, $value);
                 }
@@ -51,9 +50,9 @@ class DtoFactory
 
             return $dto;
         } catch (\ReflectionException $e) {
-            throw new DtoCreationException($dtoClass, "Reflection error: " . $e->getMessage());
+            throw new DtoCreationException($dtoClass, 'Reflection error: '.$e->getMessage());
         } catch (\Throwable $e) {
-            throw new DtoCreationException($dtoClass, "Unexpected error: " . $e->getMessage());
+            throw new DtoCreationException($dtoClass, 'Unexpected error: '.$e->getMessage());
         }
     }
 }

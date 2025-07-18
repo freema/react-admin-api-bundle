@@ -8,7 +8,6 @@ use Freema\ReactAdminApiBundle\Exception\EntityNotFoundException;
 use Freema\ReactAdminApiBundle\Exception\ValidationException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -44,14 +43,14 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
         }
 
         $request = $event->getRequest();
-        
+
         // Only handle exceptions for our bundle's routes
         if (!$this->isReactAdminApiRoute($request)) {
             return;
         }
 
         $exception = $event->getThrowable();
-        
+
         $this->logger->error($exception->getMessage(), [
             'exception' => $exception,
             'request' => $request->getPathInfo(),
@@ -96,11 +95,11 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
     private function isReactAdminApiRoute(Request $request): bool
     {
         $routeName = $request->attributes->get('_route');
-        
+
         if (!$routeName) {
             return false;
         }
-        
+
         // Check if the route belongs to our bundle
         return str_starts_with($routeName, 'react_admin_api_');
     }

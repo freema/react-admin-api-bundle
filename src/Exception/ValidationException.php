@@ -22,7 +22,7 @@ class ValidationException extends \Exception
         } else {
             $this->errors = $errors;
         }
-        
+
         parent::__construct($message);
     }
 
@@ -33,27 +33,28 @@ class ValidationException extends \Exception
     {
         return $this->errors;
     }
-    
+
     public function getViolations(): ?ConstraintViolationListInterface
     {
         return $this->violations;
     }
-    
+
     /**
      * Convert violations to array format
-     * 
+     *
      * @param ConstraintViolationListInterface $violations
+     *
      * @return array<string, string>
      */
     private function violationsToArray(ConstraintViolationListInterface $violations): array
     {
         $errors = [];
-        
+
         foreach ($violations as $violation) {
             $propertyPath = $violation->getPropertyPath();
             $errors[$propertyPath] = $violation->getMessage();
         }
-        
+
         return $errors;
     }
 }

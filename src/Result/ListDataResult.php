@@ -13,8 +13,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 class ListDataResult
 {
     /**
-     * @param array<AdminApiDto> $data The list of DTOs to return
-     * @param int $total The total number of items available
+     * @param array<AdminApiDto> $data  The list of DTOs to return
+     * @param int                $total The total number of items available
      */
     public function __construct(private array $data, private int $total)
     {

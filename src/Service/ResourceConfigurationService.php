@@ -12,7 +12,7 @@ class ResourceConfigurationService
      * @param array<string, array<string, mixed>> $resources
      */
     public function __construct(
-        private readonly array $resources
+        private readonly array $resources,
     ) {
     }
 
@@ -24,12 +24,12 @@ class ResourceConfigurationService
     public function getResourceDtoClass(string $resource): string
     {
         $resourceConfig = $this->getResourceConfig($resource);
-        
+
         $resourceDtoClass = $resourceConfig['dto_class'];
         if (!is_subclass_of($resourceDtoClass, DtoInterface::class)) {
             throw new \LogicException(sprintf('Resource DTO class "%s" must implement DtoInterface', $resourceDtoClass));
         }
-        
+
         return $resourceDtoClass;
     }
 
@@ -41,22 +41,23 @@ class ResourceConfigurationService
     public function getResourceEntityClass(string $resource): string
     {
         $dtoClass = $this->getResourceDtoClass($resource);
-        
+
         return $dtoClass::getMappedEntityClass();
     }
 
     /**
      * Get the resource configuration for the given resource path.
      *
-     * @throws \InvalidArgumentException if the resource is not configured
      * @return array<string, mixed>
+     *
+     * @throws \InvalidArgumentException if the resource is not configured
      */
     public function getResourceConfig(string $resource): array
     {
         if (!isset($this->resources[$resource])) {
             throw new \InvalidArgumentException(sprintf('Resource path not configured: %s', $resource));
         }
-        
+
         return $this->resources[$resource];
     }
 

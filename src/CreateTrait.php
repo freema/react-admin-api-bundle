@@ -21,37 +21,37 @@ trait CreateTrait
     public function create(CreateDataRequest $dataRequest): CreateDataResult
     {
         $dto = $dataRequest->getDataDto();
-        
+
         try {
             $entityManager = $this->getEntityManager();
             if (!$entityManager instanceof EntityManagerInterface) {
                 throw new \LogicException('Entity manager not available');
             }
-            
+
             $entities = $this->createEntitiesFromDto($dto);
-            
+
             foreach ($entities as $entity) {
                 $entityManager->persist($entity);
             }
-            
+
             $entityManager->flush();
-            
+
             return $dataRequest->createResult(static::mapToDto($entities[0]));
         } catch (\Exception $e) {
             return $dataRequest->createResult(null, false, [$e->getMessage()]);
         }
     }
-    
+
     /**
      * Get the entity manager.
      */
     abstract public function getEntityManager();
-    
+
     /**
      * Map an entity to a DTO.
      */
     abstract public static function mapToDto(AdminEntityInterface $entity): AdminApiDto;
-    
+
     /**
      * Create entities from a DTO.
      *

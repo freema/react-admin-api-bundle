@@ -71,7 +71,7 @@ class DataProviderFactory
     private function getDefaultProvider(): DataProviderInterface
     {
         $defaultProvider = $this->getProviderByType($this->defaultProvider);
-        
+
         if ($defaultProvider === null) {
             // Ultimate fallback - create custom provider
             return new CustomDataProvider();
@@ -82,7 +82,7 @@ class DataProviderFactory
 
     /**
      * Get all registered providers
-     * 
+     *
      * @return DataProviderInterface[]
      */
     public function getProviders(): array

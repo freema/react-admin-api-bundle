@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Freema\ReactAdminApiBundle\Tests\Service;
 
-use Freema\ReactAdminApiBundle\Service\DtoFactory;
-use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 use Freema\ReactAdminApiBundle\Exception\DtoClassNotFoundException;
-use Freema\ReactAdminApiBundle\Exception\DtoInterfaceNotImplementedException;
 use Freema\ReactAdminApiBundle\Exception\DtoCreationException;
+use Freema\ReactAdminApiBundle\Exception\DtoInterfaceNotImplementedException;
+use Freema\ReactAdminApiBundle\Interface\DtoInterface;
+use Freema\ReactAdminApiBundle\Service\DtoFactory;
 use PHPUnit\Framework\TestCase;
 
 class DtoFactoryTest extends TestCase
@@ -20,7 +20,7 @@ class DtoFactoryTest extends TestCase
         $this->dtoFactory = new DtoFactory();
     }
 
-    public function testCreateFromArraySuccessfully(): void
+    public function test_create_from_array_successfully(): void
     {
         $data = [
             'name' => 'John Doe',
@@ -38,7 +38,7 @@ class DtoFactoryTest extends TestCase
         $this->assertEquals(30, $dto->age);
     }
 
-    public function testCreateFromArrayWithMissingProperties(): void
+    public function test_create_from_array_with_missing_properties(): void
     {
         $data = [
             'name' => 'John Doe',
@@ -54,7 +54,7 @@ class DtoFactoryTest extends TestCase
         $this->assertEquals(0, $dto->age); // Default value
     }
 
-    public function testCreateFromArrayWithEmptyData(): void
+    public function test_create_from_array_with_empty_data(): void
     {
         $data = [];
 
@@ -67,7 +67,7 @@ class DtoFactoryTest extends TestCase
         $this->assertEquals(0, $dto->age);
     }
 
-    public function testThrowsExceptionWhenClassNotExists(): void
+    public function test_throws_exception_when_class_not_exists(): void
     {
         $this->expectException(DtoClassNotFoundException::class);
         $this->expectExceptionMessage("DTO class 'NonExistentClass' does not exist");
@@ -75,7 +75,7 @@ class DtoFactoryTest extends TestCase
         $this->dtoFactory->createFromArray([], 'NonExistentClass');
     }
 
-    public function testThrowsExceptionWhenClassDoesNotImplementInterface(): void
+    public function test_throws_exception_when_class_does_not_implement_interface(): void
     {
         $this->expectException(DtoInterfaceNotImplementedException::class);
         $this->expectExceptionMessage("Class 'stdClass' must implement DtoInterface");
@@ -83,15 +83,15 @@ class DtoFactoryTest extends TestCase
         $this->dtoFactory->createFromArray([], \stdClass::class);
     }
 
-    public function testThrowsExceptionWhenReflectionFails(): void
+    public function test_throws_exception_when_reflection_fails(): void
     {
         $this->expectException(DtoCreationException::class);
-        $this->expectExceptionMessage("Failed to create DTO");
+        $this->expectExceptionMessage('Failed to create DTO');
 
         $this->dtoFactory->createFromArray([], BrokenDto::class);
     }
 
-    public function testCreateFromArrayWithNullValues(): void
+    public function test_create_from_array_with_null_values(): void
     {
         $data = [
             'name' => null,
@@ -109,7 +109,7 @@ class DtoFactoryTest extends TestCase
         $this->assertNull($dto->age);
     }
 
-    public function testCreateFromArrayWithComplexData(): void
+    public function test_create_from_array_with_complex_data(): void
     {
         $data = [
             'name' => 'John Doe',

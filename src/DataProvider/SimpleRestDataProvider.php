@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Simple REST data provider for ra-data-simple-rest compatibility
- * 
+ *
  * Expected format:
  * GET /posts?sort=["title","ASC"]&range=[0, 24]&filter={"title":"bar"}
  */
@@ -59,6 +59,7 @@ class SimpleRestDataProvider extends AbstractDataProvider
                 $end = (int) $decoded[1];
                 $perPage = $end - $start + 1;
                 $page = (int) floor($start / $perPage) + 1;
+
                 return [$page, $perPage];
             }
         }
@@ -98,6 +99,7 @@ class SimpleRestDataProvider extends AbstractDataProvider
 
         if (is_string($filter)) {
             $decoded = json_decode($filter, true);
+
             return $decoded ?? [];
         }
 

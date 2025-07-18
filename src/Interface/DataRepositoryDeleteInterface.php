@@ -17,7 +17,7 @@ interface DataRepositoryDeleteInterface
      * Delete an entity by ID.
      */
     public function delete(DeleteDataRequest $dataRequest): DeleteDataResult;
-    
+
     /**
      * Delete multiple entities by ID.
      */

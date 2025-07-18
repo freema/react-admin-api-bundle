@@ -13,7 +13,7 @@ use Freema\ReactAdminApiBundle\Result\UpdateDataResult;
 class UpdateDataRequest
 {
     /**
-     * @param string|int $id The ID of the entity to update
+     * @param string|int  $id      The ID of the entity to update
      * @param AdminApiDto $dataDto The data to update the entity with
      */
     public function __construct(private string|int $id, private AdminApiDto $dataDto)
@@ -36,9 +36,9 @@ class UpdateDataRequest
     /**
      * Create a result from this request.
      *
-     * @param AdminApiDto|null $dataDto The updated data, or null if update failed
-     * @param bool $status Whether the operation was successful
-     * @param array<string> $errorMessages Error messages if the operation failed
+     * @param AdminApiDto|null $dataDto       The updated data, or null if update failed
+     * @param bool             $status        Whether the operation was successful
+     * @param array<string>    $errorMessages Error messages if the operation failed
      */
     public function createResult(?AdminApiDto $dataDto = null, bool $status = true, array $errorMessages = []): UpdateDataResult
     {

@@ -27,9 +27,9 @@ class CreateDataRequest
     /**
      * Create a result from this request.
      *
-     * @param AdminApiDto|null $dataDto The data that was created, or null if creation failed
-     * @param bool $status Whether the operation was successful
-     * @param array<string> $errorMessages Error messages if the operation failed
+     * @param AdminApiDto|null $dataDto       The data that was created, or null if creation failed
+     * @param bool             $status        Whether the operation was successful
+     * @param array<string>    $errorMessages Error messages if the operation failed
      */
     public function createResult(?AdminApiDto $dataDto = null, bool $status = true, array $errorMessages = []): CreateDataResult
     {

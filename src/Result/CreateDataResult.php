@@ -14,14 +14,14 @@ use Symfony\Component\HttpFoundation\Response;
 class CreateDataResult
 {
     /**
-     * @param AdminApiDto|null $data The created data, or null if creation failed
-     * @param bool $status Whether the operation was successful
-     * @param array<string> $errorMessages Error messages if the operation failed
+     * @param AdminApiDto|null $data          The created data, or null if creation failed
+     * @param bool             $status        Whether the operation was successful
+     * @param array<string>    $errorMessages Error messages if the operation failed
      */
     public function __construct(
         private ?AdminApiDto $data,
         private bool $status,
-        private array $errorMessages = []
+        private array $errorMessages = [],
     ) {
     }
 

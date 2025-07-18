@@ -46,6 +46,7 @@ abstract class AbstractDataProvider implements DataProviderInterface
 
         if (is_string($filter)) {
             $decoded = json_decode($filter, true);
+
             return $decoded ?? [];
         }
 
@@ -60,10 +61,10 @@ abstract class AbstractDataProvider implements DataProviderInterface
         // Convert page/perPage to offset/limit
         $offset = ($page - 1) * $perPage;
         $limit = $perPage;
-        
+
         // Convert filter array to JSON string
         $filterJson = !empty($filter) ? json_encode($filter) : null;
-        
+
         return new ListDataRequest(
             limit: $limit,
             offset: $offset,

@@ -11,12 +11,12 @@ namespace Freema\ReactAdminApiBundle\Request;
 readonly class ListDataRequest
 {
     public function __construct(
-        private ?int    $limit = null,
-        private ?int    $offset = null,
+        private ?int $limit = null,
+        private ?int $offset = null,
         private ?string $sortField = null,
         private ?string $sortOrder = null,
         private ?string $filter = null,
-        private array   $filterValues = []
+        private array $filterValues = [],
     ) {
     }
 

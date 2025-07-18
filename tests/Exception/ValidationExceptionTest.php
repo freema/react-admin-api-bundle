@@ -11,32 +11,32 @@ use Symfony\Component\Validator\ConstraintViolationList;
 
 class ValidationExceptionTest extends TestCase
 {
-    public function testConstructorWithArrayOfErrors(): void
+    public function test_constructor_with_array_of_errors(): void
     {
         $errors = [
             'email' => 'Invalid email address',
             'name' => 'Name is required',
         ];
-        
+
         $exception = new ValidationException($errors);
-        
+
         $this->assertEquals('Validation failed', $exception->getMessage());
         $this->assertEquals($errors, $exception->getErrors());
         $this->assertNull($exception->getViolations());
     }
-    
-    public function testConstructorWithCustomMessage(): void
+
+    public function test_constructor_with_custom_message(): void
     {
         $errors = ['field' => 'error'];
         $customMessage = 'Custom validation message';
-        
+
         $exception = new ValidationException($errors, $customMessage);
-        
+
         $this->assertEquals($customMessage, $exception->getMessage());
         $this->assertEquals($errors, $exception->getErrors());
     }
-    
-    public function testConstructorWithConstraintViolationList(): void
+
+    public function test_constructor_with_constraint_violation_list(): void
     {
         $violations = new ConstraintViolationList([
             new ConstraintViolation(
@@ -56,30 +56,30 @@ class ValidationExceptionTest extends TestCase
                 'ab'
             ),
         ]);
-        
+
         $exception = new ValidationException($violations);
-        
+
         $this->assertEquals('Validation failed', $exception->getMessage());
         $this->assertSame($violations, $exception->getViolations());
-        
+
         $expectedErrors = [
             'email' => 'Email is invalid',
             'name' => 'Name must be at least 3 characters',
         ];
         $this->assertEquals($expectedErrors, $exception->getErrors());
     }
-    
-    public function testConstructorWithEmptyViolationList(): void
+
+    public function test_constructor_with_empty_violation_list(): void
     {
         $violations = new ConstraintViolationList([]);
-        
+
         $exception = new ValidationException($violations);
-        
+
         $this->assertEquals([], $exception->getErrors());
         $this->assertSame($violations, $exception->getViolations());
     }
-    
-    public function testNestedPropertyPaths(): void
+
+    public function test_nested_property_paths(): void
     {
         $violations = new ConstraintViolationList([
             new ConstraintViolation(
@@ -99,17 +99,17 @@ class ValidationExceptionTest extends TestCase
                 '123'
             ),
         ]);
-        
+
         $exception = new ValidationException($violations);
-        
+
         $expectedErrors = [
             'address.street' => 'Street is required',
             'address.postalCode' => 'Invalid postal code',
         ];
         $this->assertEquals($expectedErrors, $exception->getErrors());
     }
-    
-    public function testArrayPropertyPaths(): void
+
+    public function test_array_property_paths(): void
     {
         $violations = new ConstraintViolationList([
             new ConstraintViolation(
@@ -129,9 +129,9 @@ class ValidationExceptionTest extends TestCase
                 ''
             ),
         ]);
-        
+
         $exception = new ValidationException($violations);
-        
+
         $expectedErrors = [
             'roles[1]' => 'Invalid role',
             'tags[0]' => 'Tag cannot be empty',

@@ -6,8 +6,6 @@ namespace Freema\ReactAdminApiBundle\Tests;
 
 use Freema\ReactAdminApiBundle\Controller\ResourceController;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 class ResourceControllerTest extends TestCase
 {
@@ -17,16 +15,16 @@ class ResourceControllerTest extends TestCase
         $listDataRequestFactory = $this->createMock(\Freema\ReactAdminApiBundle\Request\ListDataRequestFactory::class);
         $dataProviderFactory = $this->createMock(\Freema\ReactAdminApiBundle\DataProvider\DataProviderFactory::class);
         $dtoFactory = $this->createMock(\Freema\ReactAdminApiBundle\Service\DtoFactory::class);
-        
+
         $controller = new ResourceController(
             $resourceConfigurationService,
             $listDataRequestFactory,
             $dataProviderFactory,
             $dtoFactory
         );
-        
+
         $this->assertInstanceOf(ResourceController::class, $controller);
     }
-    
+
     // Další testy budou přidány později
 }
