@@ -1,0 +1,15 @@
+doctrine:
+    dbal:
+        url: 'sqlite:///:memory:'
+        
+    orm:
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        auto_mapping: true
+        mappings:
+            ReactAdminApiDev:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/Entity'
+                prefix: 'Freema\ReactAdminApiBundle\Dev\Entity'
+                alias: ReactAdminApiDev

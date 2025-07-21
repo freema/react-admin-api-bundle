@@ -1,0 +1,11 @@
+# Standard Symfony routing for resource controller
+react_admin_api_resource:
+    resource: Freema\ReactAdminApiBundle\Controller\ResourceController
+    type: attribute
+    prefix: /api
+
+# Standard Symfony routing for related resource controller
+react_admin_api_related_resource:
+    resource: Freema\ReactAdminApiBundle\Controller\RelatedResourceController
+    type: attribute
+    prefix: /api

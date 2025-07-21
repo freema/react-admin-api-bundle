@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    image: php:8.2-cli-alpine
+    container_name: react-admin-api-bundle-app
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - PHP_IDE_CONFIG=serverName=react-admin-api-bundle
+      - COMPOSER_ALLOW_SUPERUSER=1
+    command: >
+      sh -c "
+        apk add --no-cache git zip unzip;
+        curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer;
+        tail -f /dev/null
+      "
+    ports:
+      - "8080:8080"
