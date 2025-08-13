@@ -11,19 +11,16 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 
 class ApiExceptionListenerValidationTest extends TestCase
 {
     private ApiExceptionListener $listener;
-    private RouterInterface $router;
     private HttpKernelInterface $kernel;
 
     protected function setUp(): void
     {
-        $this->router = $this->createMock(RouterInterface::class);
         $this->kernel = $this->createMock(HttpKernelInterface::class);
 
         $this->listener = new ApiExceptionListener(
@@ -112,9 +109,9 @@ class ApiExceptionListenerValidationTest extends TestCase
         $this->assertEquals('Validation failed', $content['message']);
 
         $expectedErrors = [
-            'email' => 'Email is invalid',
-            'name' => 'Name must be at least 3 characters',
-            'roles[1]' => 'Invalid role',
+            'email' => 'Email is invalid (received: "not-an-email")',
+            'name' => 'Name must be at least 3 characters (received: "ab")',
+            'roles[1]' => 'Invalid role (received: "INVALID_ROLE")',
         ];
         $this->assertEquals($expectedErrors, $content['errors']);
     }
@@ -148,8 +145,8 @@ class ApiExceptionListenerValidationTest extends TestCase
         $this->assertEquals('Validation failed', $content['message']);
         $this->assertEquals($errors, $content['errors']);
 
-        // Debug info is not added for validation errors as they already have detailed information
-        $this->assertArrayNotHasKey('debug', $content);
+        // Debug info should be present in debug mode
+        $this->assertArrayHasKey('debug', $content);
     }
 
     public function test_ignore_validation_exception_for_non_api_routes(): void
@@ -216,8 +213,8 @@ class ApiExceptionListenerValidationTest extends TestCase
 
         $expectedErrors = [
             'address.street' => 'Street is required',
-            'address.postalCode' => 'Invalid postal code',
-            'items[0].price' => 'Price must be greater than 0',
+            'address.postalCode' => 'Invalid postal code (received: "123")',
+            'items[0].price' => 'Price must be greater than 0 (received: "-10")',
         ];
         $this->assertEquals($expectedErrors, $content['errors']);
     }
