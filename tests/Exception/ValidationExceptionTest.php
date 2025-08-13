@@ -62,11 +62,15 @@ class ValidationExceptionTest extends TestCase
         $this->assertEquals('Validation failed', $exception->getMessage());
         $this->assertSame($violations, $exception->getViolations());
 
-        $expectedErrors = [
-            'email' => 'Email is invalid',
-            'name' => 'Name must be at least 3 characters',
-        ];
-        $this->assertEquals($expectedErrors, $exception->getErrors());
+        $errors = $exception->getErrors();
+        
+        // Check that we have the correct structure with detailed error information
+        $this->assertIsArray($errors['email']);
+        $this->assertIsArray($errors['name']);
+        $this->assertEquals('Email is invalid', $errors['email']['message']);
+        $this->assertEquals('Name must be at least 3 characters', $errors['name']['message']);
+        $this->assertEquals('invalid@', $errors['email']['value']);
+        $this->assertEquals('ab', $errors['name']['value']);
     }
 
     public function test_constructor_with_empty_violation_list(): void
@@ -102,11 +106,13 @@ class ValidationExceptionTest extends TestCase
 
         $exception = new ValidationException($violations);
 
-        $expectedErrors = [
-            'address.street' => 'Street is required',
-            'address.postalCode' => 'Invalid postal code',
-        ];
-        $this->assertEquals($expectedErrors, $exception->getErrors());
+        $errors = $exception->getErrors();
+        
+        $this->assertIsArray($errors['address.street']);
+        $this->assertIsArray($errors['address.postalCode']);
+        $this->assertEquals('Street is required', $errors['address.street']['message']);
+        $this->assertEquals('Invalid postal code', $errors['address.postalCode']['message']);
+        $this->assertEquals('123', $errors['address.postalCode']['value']);
     }
 
     public function test_array_property_paths(): void
@@ -132,10 +138,13 @@ class ValidationExceptionTest extends TestCase
 
         $exception = new ValidationException($violations);
 
-        $expectedErrors = [
-            'roles[1]' => 'Invalid role',
-            'tags[0]' => 'Tag cannot be empty',
-        ];
-        $this->assertEquals($expectedErrors, $exception->getErrors());
+        $errors = $exception->getErrors();
+        
+        $this->assertIsArray($errors['roles[1]']);
+        $this->assertIsArray($errors['tags[0]']);
+        $this->assertEquals('Invalid role', $errors['roles[1]']['message']);
+        $this->assertEquals('Tag cannot be empty', $errors['tags[0]']['message']);
+        $this->assertEquals('INVALID_ROLE', $errors['roles[1]']['value']);
+        $this->assertEquals('', $errors['tags[0]']['value']);
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Freema\ReactAdminApiBundle\EventListener;
 
+use Doctrine\ORM\Query\QueryException;
+use Freema\ReactAdminApiBundle\Exception\AdminAccessDeniedException;
 use Freema\ReactAdminApiBundle\Exception\EntityNotFoundException;
 use Freema\ReactAdminApiBundle\Exception\ValidationException;
 use Psr\Log\LoggerAwareInterface;
@@ -15,14 +17,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Routing\RouterInterface;
-
 class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
     public function __construct(
-        private readonly RouterInterface $router,
         private readonly bool $enabled,
         private readonly bool $debugMode,
     ) {
@@ -51,7 +50,7 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
 
         $exception = $event->getThrowable();
 
-        $this->logger->error($exception->getMessage(), [
+        $this->logger?->error($exception->getMessage(), [
             'exception' => $exception,
             'request' => $request->getPathInfo(),
         ]);
@@ -61,6 +60,7 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
             'error' => $this->debugMode ? $exception->getMessage() : 'An unexpected error occurred',
         ];
 
+        // Only add debug info in development mode
         if ($this->debugMode) {
             $responseData['debug'] = [
                 'message' => $exception->getMessage(),
@@ -70,23 +70,85 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
             ];
         }
 
-        if ($exception instanceof EntityNotFoundException) {
+        if ($exception instanceof AdminAccessDeniedException) {
+            $statusCode = Response::HTTP_UNAUTHORIZED;
+            $responseData = [
+                'error' => 'ADMIN_ACCESS_DENIED',
+                'message' => $exception->getMessage(),
+            ];
+        } elseif ($exception instanceof EntityNotFoundException) {
             $statusCode = Response::HTTP_NOT_FOUND;
             $responseData = [
                 'error' => $exception->getMessage(),
             ];
         } elseif ($exception instanceof ValidationException) {
             $statusCode = Response::HTTP_BAD_REQUEST;
+            $errors = $exception->getErrors();
+
+            // Format errors for better readability
+            $formattedErrors = [];
+            $detailedErrors = [];
+
+            foreach ($errors as $field => $fieldError) {
+                if (is_array($fieldError)) {
+                    // Check if it's a detailed error or array of errors
+                    if (isset($fieldError['message'])) {
+                        // Single detailed error
+                        $formattedErrors[$field] = $this->formatDetailedError($fieldError);
+                        $detailedErrors[$field] = $fieldError;
+                    } else {
+                        // Multiple errors for the same field
+                        $messages = [];
+                        $details = [];
+                        foreach ($fieldError as $error) {
+                            if (is_array($error) && isset($error['message'])) {
+                                $messages[] = $this->formatDetailedError($error);
+                                $details[] = $error;
+                            } else {
+                                $messages[] = (string) $error;
+                            }
+                        }
+                        $formattedErrors[$field] = implode('; ', $messages);
+                        $detailedErrors[$field] = $details;
+                    }
+                } else {
+                    $formattedErrors[$field] = (string) $fieldError;
+                }
+            }
+
             $responseData = [
                 'error' => 'VALIDATION_ERROR',
                 'message' => 'Validation failed',
-                'errors' => $exception->getErrors(),
+                'errors' => $formattedErrors,
             ];
+
+            // Always include detailed errors for better debugging
+            $responseData['details'] = $detailedErrors;
+
+            // Add debug info if enabled
+            if ($this->debugMode) {
+                $responseData['debug'] = [
+                    'raw_errors' => $errors,
+                ];
+            }
         } elseif ($exception instanceof \InvalidArgumentException) {
             $statusCode = Response::HTTP_BAD_REQUEST;
             $responseData = [
                 'error' => $exception->getMessage(),
             ];
+        } elseif ($exception instanceof QueryException) {
+            $statusCode = Response::HTTP_BAD_REQUEST;
+            $responseData = [
+                'error' => $this->debugMode ? $exception->getMessage() : 'Invalid query parameter',
+            ];
+
+            // Only add debug info in development mode for SQL errors
+            if ($this->debugMode) {
+                $responseData['debug'] = [
+                    'message' => $exception->getMessage(),
+                    'type' => 'QueryException',
+                ];
+            }
         }
 
         $event->setResponse(new JsonResponse($responseData, $statusCode));
@@ -102,5 +164,26 @@ class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInter
 
         // Check if the route belongs to our bundle
         return str_starts_with($routeName, 'react_admin_api_');
+    }
+
+    private function formatDetailedError(array $error): string
+    {
+        $message = $error['message'] ?? 'Unknown error';
+
+        // Add value information
+        if (isset($error['value'])) {
+            $value = is_scalar($error['value']) ? $error['value'] : json_encode($error['value']);
+            $message .= sprintf(' (received: "%s")', $value);
+        }
+
+        // Add allowed values if available
+        if (isset($error['allowed_values']) && is_array($error['allowed_values'])) {
+            $allowedStr = implode(', ', array_map(function ($v) {
+                return '"'.$v.'"';
+            }, $error['allowed_values']));
+            $message .= sprintf(' [allowed values: %s]', $allowedStr);
+        }
+
+        return $message;
     }
 }

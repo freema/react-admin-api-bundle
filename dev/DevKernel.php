@@ -48,19 +48,7 @@ class DevKernel extends Kernel
             ],
         ]);
 
-
-        $container->loadFromExtension('react_admin_api', [
-            'exception_listener' => [
-                'enabled' => false,
-                'debug_mode' => true,
-            ],
-            'resources' => [
-                'users' => [
-                    'dto_class' => 'Freema\ReactAdminApiBundle\Dev\Dto\UserDto',
-                ],
-            ],
-        ]);
-
+        // Load configuration files  
         $loader->load(__DIR__.'/config/services.yaml');
         $loader->load(__DIR__.'/config/packages/*.yaml', 'glob');
     }

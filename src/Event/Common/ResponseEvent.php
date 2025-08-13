@@ -19,7 +19,7 @@ class ResponseEvent extends ReactAdminApiEvent
         Request $request,
         private JsonResponse $response,
         private readonly string $operation,
-        private readonly mixed $originalData = null
+        private readonly mixed $originalData = null,
     ) {
         parent::__construct($resource, $request);
     }
@@ -38,6 +38,7 @@ class ResponseEvent extends ReactAdminApiEvent
     public function setResponse(JsonResponse $response): self
     {
         $this->response = $response;
+
         return $this;
     }
 
@@ -62,7 +63,11 @@ class ResponseEvent extends ReactAdminApiEvent
      */
     public function getResponseData(): array
     {
-        return json_decode($this->response->getContent(), true) ?? [];
+        $content = $this->response->getContent();
+        if ($content === false) {
+            return [];
+        }
+        return json_decode($content, true) ?? [];
     }
 
     /**
@@ -71,6 +76,7 @@ class ResponseEvent extends ReactAdminApiEvent
     public function setResponseData(array $data): self
     {
         $this->response->setData($data);
+
         return $this;
     }
 
@@ -82,6 +88,7 @@ class ResponseEvent extends ReactAdminApiEvent
         $data = $this->getResponseData();
         $data[$key] = $value;
         $this->setResponseData($data);
+
         return $this;
     }
 
@@ -93,6 +100,7 @@ class ResponseEvent extends ReactAdminApiEvent
         $data = $this->getResponseData();
         unset($data[$key]);
         $this->setResponseData($data);
+
         return $this;
     }
 
@@ -110,6 +118,7 @@ class ResponseEvent extends ReactAdminApiEvent
     public function setStatusCode(int $statusCode): self
     {
         $this->response->setStatusCode($statusCode);
+
         return $this;
     }
 
@@ -127,6 +136,7 @@ class ResponseEvent extends ReactAdminApiEvent
     public function addHeader(string $name, string $value): self
     {
         $this->response->headers->set($name, $value);
+
         return $this;
     }
 
@@ -136,6 +146,7 @@ class ResponseEvent extends ReactAdminApiEvent
     public function removeHeader(string $name): self
     {
         $this->response->headers->remove($name);
+
         return $this;
     }
 
@@ -147,7 +158,7 @@ class ResponseEvent extends ReactAdminApiEvent
         $this->response->headers->set('Access-Control-Allow-Origin', implode(', ', $allowedOrigins));
         $this->response->headers->set('Access-Control-Allow-Methods', implode(', ', $allowedMethods));
         $this->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-        
+
         return $this;
     }
 
@@ -156,12 +167,12 @@ class ResponseEvent extends ReactAdminApiEvent
      */
     public function addCachingHeaders(int $maxAge = 0, bool $public = false): self
     {
-        $this->response->headers->set('Cache-Control', ($public ? 'public' : 'private') . ', max-age=' . $maxAge);
-        
+        $this->response->headers->set('Cache-Control', ($public ? 'public' : 'private').', max-age='.$maxAge);
+
         if ($maxAge > 0) {
-            $this->response->headers->set('Expires', (new \DateTimeImmutable('+' . $maxAge . ' seconds'))->format('D, d M Y H:i:s \G\M\T'));
+            $this->response->headers->set('Expires', (new \DateTimeImmutable('+'.$maxAge.' seconds'))->format('D, d M Y H:i:s \G\M\T'));
         }
-        
+
         return $this;
     }
 
@@ -173,6 +184,7 @@ class ResponseEvent extends ReactAdminApiEvent
         $data = $this->getResponseData();
         $data['_metadata'] = array_merge($data['_metadata'] ?? [], $metadata);
         $this->setResponseData($data);
+
         return $this;
     }
 
@@ -183,15 +195,15 @@ class ResponseEvent extends ReactAdminApiEvent
     {
         $endTime = new \DateTimeImmutable();
         $duration = $endTime->getTimestamp() - $startTime->getTimestamp();
-        
+
         $this->addMetadata([
             'timing' => [
                 'start' => $startTime->format('c'),
                 'end' => $endTime->format('c'),
-                'duration' => $duration . 'ms'
-            ]
+                'duration' => $duration.'ms',
+            ],
         ]);
-        
+
         return $this;
     }
 

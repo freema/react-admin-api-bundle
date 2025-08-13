@@ -12,15 +12,15 @@ class ResourceControllerTest extends TestCase
     public function test_controller_can_be_instantiated(): void
     {
         $resourceConfigurationService = $this->createMock(\Freema\ReactAdminApiBundle\Service\ResourceConfigurationService::class);
-        $listDataRequestFactory = $this->createMock(\Freema\ReactAdminApiBundle\Request\ListDataRequestFactory::class);
         $dataProviderFactory = $this->createMock(\Freema\ReactAdminApiBundle\DataProvider\DataProviderFactory::class);
         $dtoFactory = $this->createMock(\Freema\ReactAdminApiBundle\Service\DtoFactory::class);
+        $eventDispatcher = $this->createMock(\Symfony\Contracts\EventDispatcher\EventDispatcherInterface::class);
 
         $controller = new ResourceController(
             $resourceConfigurationService,
-            $listDataRequestFactory,
             $dataProviderFactory,
-            $dtoFactory
+            $dtoFactory,
+            $eventDispatcher
         );
 
         $this->assertInstanceOf(ResourceController::class, $controller);

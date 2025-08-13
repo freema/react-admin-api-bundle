@@ -8,19 +8,23 @@ use Doctrine\ORM\EntityManagerInterface;
 use Freema\ReactAdminApiBundle\DataProvider\DataProviderFactory;
 use Freema\ReactAdminApiBundle\Event\Common\ResourceAccessEvent;
 use Freema\ReactAdminApiBundle\Event\Common\ResponseEvent;
-use Freema\ReactAdminApiBundle\Event\List\PreListEvent;
+use Freema\ReactAdminApiBundle\Event\Crud\EntityCreatedEvent;
+use Freema\ReactAdminApiBundle\Event\Crud\EntityDeletedEvent;
+use Freema\ReactAdminApiBundle\Event\Crud\EntityUpdatedEvent;
 use Freema\ReactAdminApiBundle\Event\List\PostListEvent;
+use Freema\ReactAdminApiBundle\Event\List\PreListEvent;
 use Freema\ReactAdminApiBundle\Exception\ValidationException;
+use Freema\ReactAdminApiBundle\Interface\AdminEntityInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryCreateInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryDeleteInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryFindInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryListInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryUpdateInterface;
 use Freema\ReactAdminApiBundle\Interface\DtoInterface;
+use Freema\ReactAdminApiBundle\Dto\AdminApiDto;
 use Freema\ReactAdminApiBundle\Request\CreateDataRequest;
 use Freema\ReactAdminApiBundle\Request\DeleteDataRequest;
 use Freema\ReactAdminApiBundle\Request\DeleteManyDataRequest;
-use Freema\ReactAdminApiBundle\Request\ListDataRequestFactory;
 use Freema\ReactAdminApiBundle\Request\UpdateDataRequest;
 use Freema\ReactAdminApiBundle\Service\DtoFactory;
 use Freema\ReactAdminApiBundle\Service\ResourceConfigurationService;
@@ -42,7 +46,6 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
     public function __construct(
         private readonly ResourceConfigurationService $resourceConfig,
-        private readonly ListDataRequestFactory $listDataRequestFactory,
         private readonly DataProviderFactory $dataProviderFactory,
         private readonly DtoFactory $dtoFactory,
         private readonly EventDispatcherInterface $eventDispatcher,
@@ -66,15 +69,15 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
         // Transform request using data provider
         $requestData = $dataProvider->transformListRequest($request);
-        
+
         // Dispatch pre-list event
         $preListEvent = new PreListEvent($resource, $request, $requestData);
         $this->eventDispatcher->dispatch($preListEvent, 'react_admin_api.pre_list');
-        
+
         if ($preListEvent->isCancelled()) {
             return new JsonResponse(['error' => 'Operation cancelled'], Response::HTTP_FORBIDDEN);
         }
-        
+
         // Use potentially modified request data
         $requestData = $preListEvent->getListDataRequest();
         $entityClass = $this->getResourceEntityClass($resource);
@@ -85,11 +88,11 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         }
 
         $responseData = $repository->list($requestData);
-        
+
         // Dispatch post-list event
         $postListEvent = new PostListEvent($resource, $request, $requestData, $responseData);
         $this->eventDispatcher->dispatch($postListEvent, 'react_admin_api.post_list');
-        
+
         // Use potentially modified result data
         $responseData = $postListEvent->getListDataResult();
 
@@ -118,7 +121,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         // Dispatch response event
         $responseEvent = new ResponseEvent($resource, $request, $response, 'list', $responseData);
         $this->eventDispatcher->dispatch($responseEvent, 'react_admin_api.response');
-        
+
         return $responseEvent->getResponse();
     }
 
@@ -189,8 +192,13 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
         // Validate the DTO
         $violations = $validator->validate($dataDto);
+
         if (count($violations) > 0) {
             throw new ValidationException($violations);
+        }
+
+        if (!$dataDto instanceof AdminApiDto) {
+            throw new \InvalidArgumentException('DTO must be instance of AdminApiDto');
         }
 
         $requestData = new CreateDataRequest($dataDto);
@@ -201,6 +209,10 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         }
 
         $responseData = $repository->create($requestData);
+
+        // Dispatch entity created event
+        $createEvent = new EntityCreatedEvent($resource, $request, $requestData, $responseData);
+        $this->eventDispatcher->dispatch($createEvent, 'react_admin_api.entity_created');
 
         return $responseData->createResponse();
     }
@@ -232,6 +244,18 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
             throw new ValidationException($violations);
         }
 
+        if (!$dataDto instanceof AdminApiDto) {
+            throw new \InvalidArgumentException('DTO must be instance of AdminApiDto');
+        }
+
+        // Get old entity before update for logging
+        $oldEntity = null;
+        try {
+            $oldEntity = $entityManager->getRepository($entityClass)->find($id);
+        } catch (\Exception $e) {
+            // Ignore errors when getting old entity
+        }
+
         $requestData = new UpdateDataRequest($id, $dataDto);
 
         $repository = $entityManager->getRepository($entityClass);
@@ -241,6 +265,11 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
         $responseData = $repository->update($requestData);
 
+        // Dispatch entity updated event
+        $oldEntityAdmin = $oldEntity instanceof AdminEntityInterface ? $oldEntity : null;
+        $updateEvent = new EntityUpdatedEvent($resource, $request, $requestData, $oldEntityAdmin, $responseData);
+        $this->eventDispatcher->dispatch($updateEvent, 'react_admin_api.entity_updated');
+
         return $responseData->createResponse();
     }
 
@@ -248,16 +277,32 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     public function delete(
         string $resource,
         string $id,
+        Request $request,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
         $entityClass = $this->getResourceEntityClass($resource);
+
+        // Get entity before deletion for logging
+        $deletedEntity = null;
+        try {
+            $deletedEntity = $entityManager->getRepository($entityClass)->find($id);
+        } catch (\Exception $e) {
+            // Ignore errors when getting entity
+        }
+
+        $requestData = new DeleteDataRequest($id);
 
         $repository = $entityManager->getRepository($entityClass);
         if (!$repository instanceof DataRepositoryDeleteInterface) {
             throw new \InvalidArgumentException('Repository does not implement DataRepositoryDeleteInterface');
         }
 
-        $responseData = $repository->delete(new DeleteDataRequest($id));
+        $responseData = $repository->delete($requestData);
+
+        // Dispatch entity deleted event
+        $deletedEntityAdmin = $deletedEntity instanceof AdminEntityInterface ? $deletedEntity : null;
+        $deleteEvent = new EntityDeletedEvent($resource, $request, $requestData, $deletedEntityAdmin, $responseData);
+        $this->eventDispatcher->dispatch($deleteEvent, 'react_admin_api.entity_deleted');
 
         return $responseData->createResponse();
     }
@@ -289,7 +334,7 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     {
         $accessEvent = new ResourceAccessEvent($resource, $request, $operation, $resourceId);
         $this->eventDispatcher->dispatch($accessEvent, 'react_admin_api.resource_access');
-        
+
         return !$accessEvent->isCancelled();
     }
 

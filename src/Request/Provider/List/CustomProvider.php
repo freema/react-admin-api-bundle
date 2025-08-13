@@ -42,23 +42,33 @@ class CustomProvider implements ListDataRequestProviderInterface
         $sortField = $request->query->get('sort_field', null);
         $sortOrder = $request->query->get('sort_order', null);
         if ($sortOrder) {
-            $sortOrder = strtoupper($sortOrder);
+            $sortOrder = strtoupper((string) $sortOrder);
         }
 
         // Parse filter parameter
         $filter = $request->query->get('filter', null);
         $filterValues = [];
-        if ($filter) {
-            $filterValues = json_decode($filter, true) ?? [];
+        if ($filter && is_string($filter)) {
+            $decoded = json_decode($filter, true);
+            $filterValues = is_array($decoded) ? $decoded : [];
         }
 
+        // Ensure proper types for constructor
+        $filterJson = null;
+        if (!empty($filterValues)) {
+            $filterJson = json_encode($filterValues);
+            if ($filterJson === false) {
+                $filterJson = null;
+            }
+        }
+        
         return new ListDataRequest(
-            $limit,
-            $offset,
-            $sortField,
-            $sortOrder,
-            $filter,
-            $filterValues
+            limit: $limit,
+            offset: $offset,
+            sortField: is_string($sortField) ? $sortField : null,
+            sortOrder: is_string($sortOrder) ? $sortOrder : null,
+            filter: $filterJson,
+            filterValues: $filterValues
         );
     }
 }

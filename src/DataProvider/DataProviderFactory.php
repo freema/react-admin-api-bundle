@@ -18,13 +18,16 @@ class DataProviderFactory
 
     private string $defaultProvider;
 
+    private ?string $forceProvider = null;
+
     /**
      * @param DataProviderInterface[] $providers
      */
-    public function __construct(array $providers = [], string $defaultProvider = 'custom')
+    public function __construct(array $providers = [], string $defaultProvider = 'custom', ?string $forceProvider = null)
     {
         $this->providers = $providers;
         $this->defaultProvider = $defaultProvider;
+        $this->forceProvider = $forceProvider;
     }
 
     /**
@@ -40,6 +43,14 @@ class DataProviderFactory
      */
     public function getProvider(Request $request): DataProviderInterface
     {
+        // If force provider is set, use it instead of auto-detection
+        if ($this->forceProvider !== null) {
+            $forcedProvider = $this->getProviderByType($this->forceProvider);
+            if ($forcedProvider !== null) {
+                return $forcedProvider;
+            }
+        }
+
         // Try to find a provider that supports the request
         foreach ($this->providers as $provider) {
             if ($provider->supports($request)) {
