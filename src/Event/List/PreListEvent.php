@@ -17,7 +17,7 @@ class PreListEvent extends ReactAdminApiEvent
     public function __construct(
         string $resource,
         Request $request,
-        private ListDataRequest $listDataRequest
+        private ListDataRequest $listDataRequest,
     ) {
         parent::__construct($resource, $request);
     }
@@ -36,6 +36,7 @@ class PreListEvent extends ReactAdminApiEvent
     public function setListDataRequest(ListDataRequest $listDataRequest): self
     {
         $this->listDataRequest = $listDataRequest;
+
         return $this;
     }
 
@@ -54,16 +55,21 @@ class PreListEvent extends ReactAdminApiEvent
     {
         $filters = $this->listDataRequest->getFilterValues();
         $filters[$field] = $value;
-        
+
         // Create new request with updated filters
+        $filterJson = count($filters) > 0 ? json_encode($filters) : null;
+        if ($filterJson === false) {
+            $filterJson = null;
+        }
         $this->listDataRequest = new ListDataRequest(
-            $this->listDataRequest->getPage(),
-            $this->listDataRequest->getPerPage(),
-            $this->listDataRequest->getSortField(),
-            $this->listDataRequest->getSortOrder(),
-            $filters
+            limit: $this->listDataRequest->getLimit(),
+            offset: $this->listDataRequest->getOffset(),
+            sortField: $this->listDataRequest->getSortField(),
+            sortOrder: $this->listDataRequest->getSortOrder(),
+            filter: $filterJson,
+            filterValues: $filters
         );
-        
+
         return $this;
     }
 
@@ -74,16 +80,21 @@ class PreListEvent extends ReactAdminApiEvent
     {
         $filters = $this->listDataRequest->getFilterValues();
         unset($filters[$field]);
-        
+
         // Create new request with updated filters
+        $filterJson = count($filters) > 0 ? json_encode($filters) : null;
+        if ($filterJson === false) {
+            $filterJson = null;
+        }
         $this->listDataRequest = new ListDataRequest(
-            $this->listDataRequest->getPage(),
-            $this->listDataRequest->getPerPage(),
-            $this->listDataRequest->getSortField(),
-            $this->listDataRequest->getSortOrder(),
-            $filters
+            limit: $this->listDataRequest->getLimit(),
+            offset: $this->listDataRequest->getOffset(),
+            sortField: $this->listDataRequest->getSortField(),
+            sortOrder: $this->listDataRequest->getSortOrder(),
+            filter: $filterJson,
+            filterValues: $filters
         );
-        
+
         return $this;
     }
 
@@ -92,14 +103,19 @@ class PreListEvent extends ReactAdminApiEvent
      */
     public function setFilters(array $filters): self
     {
+        $filterJson = count($filters) > 0 ? json_encode($filters) : null;
+        if ($filterJson === false) {
+            $filterJson = null;
+        }
         $this->listDataRequest = new ListDataRequest(
-            $this->listDataRequest->getPage(),
-            $this->listDataRequest->getPerPage(),
-            $this->listDataRequest->getSortField(),
-            $this->listDataRequest->getSortOrder(),
-            $filters
+            limit: $this->listDataRequest->getLimit(),
+            offset: $this->listDataRequest->getOffset(),
+            sortField: $this->listDataRequest->getSortField(),
+            sortOrder: $this->listDataRequest->getSortOrder(),
+            filter: $filterJson,
+            filterValues: $filters
         );
-        
+
         return $this;
     }
 
@@ -110,7 +126,7 @@ class PreListEvent extends ReactAdminApiEvent
     {
         return [
             'field' => $this->listDataRequest->getSortField(),
-            'order' => $this->listDataRequest->getSortOrder()
+            'order' => $this->listDataRequest->getSortOrder(),
         ];
     }
 
@@ -119,14 +135,20 @@ class PreListEvent extends ReactAdminApiEvent
      */
     public function setSort(?string $field, ?string $order = 'ASC'): self
     {
+        $filters = $this->listDataRequest->getFilterValues();
+        $filterJson = count($filters) > 0 ? json_encode($filters) : null;
+        if ($filterJson === false) {
+            $filterJson = null;
+        }
         $this->listDataRequest = new ListDataRequest(
-            $this->listDataRequest->getPage(),
-            $this->listDataRequest->getPerPage(),
-            $field,
-            $order,
-            $this->listDataRequest->getFilterValues()
+            limit: $this->listDataRequest->getLimit(),
+            offset: $this->listDataRequest->getOffset(),
+            sortField: $field,
+            sortOrder: $order,
+            filter: $filterJson,
+            filterValues: $filters
         );
-        
+
         return $this;
     }
 
@@ -135,11 +157,15 @@ class PreListEvent extends ReactAdminApiEvent
      */
     public function getPagination(): array
     {
+        $offset = $this->listDataRequest->getOffset() ?? 0;
+        $limit = $this->listDataRequest->getLimit() ?? 10;
+        $page = $limit > 0 ? (int) floor($offset / $limit) + 1 : 1;
+        
         return [
-            'page' => $this->listDataRequest->getPage(),
-            'perPage' => $this->listDataRequest->getPerPage(),
-            'offset' => $this->listDataRequest->getOffset(),
-            'limit' => $this->listDataRequest->getLimit()
+            'page' => $page,
+            'perPage' => $limit,
+            'offset' => $offset,
+            'limit' => $limit,
         ];
     }
 
@@ -148,14 +174,24 @@ class PreListEvent extends ReactAdminApiEvent
      */
     public function setPagination(?int $page, ?int $perPage): self
     {
-        $this->listDataRequest = new ListDataRequest(
-            $page,
-            $perPage,
-            $this->listDataRequest->getSortField(),
-            $this->listDataRequest->getSortOrder(),
-            $this->listDataRequest->getFilterValues()
-        );
+        // Convert page/perPage to offset/limit
+        $offset = $page && $perPage ? ($page - 1) * $perPage : null;
+        $limit = $perPage;
         
+        $filters = $this->listDataRequest->getFilterValues();
+        $filterJson = count($filters) > 0 ? json_encode($filters) : null;
+        if ($filterJson === false) {
+            $filterJson = null;
+        }
+        $this->listDataRequest = new ListDataRequest(
+            limit: $limit,
+            offset: $offset,
+            sortField: $this->listDataRequest->getSortField(),
+            sortOrder: $this->listDataRequest->getSortOrder(),
+            filter: $filterJson,
+            filterValues: $filters
+        );
+
         return $this;
     }
 }

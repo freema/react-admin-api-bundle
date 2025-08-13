@@ -29,8 +29,17 @@ class CustomDataProvider extends AbstractDataProvider
 
     public function transformResponse(array $data, int $total): array
     {
+        $transformedData = [];
+        foreach ($data as $dto) {
+            if ($dto instanceof \Freema\ReactAdminApiBundle\Interface\DtoInterface) {
+                $transformedData[] = $dto->toArray();
+            } else {
+                $transformedData[] = $dto; // fallback for non-DTO data
+            }
+        }
+
         return [
-            'data' => $data,
+            'data' => $transformedData,
             'total' => $total,
         ];
     }

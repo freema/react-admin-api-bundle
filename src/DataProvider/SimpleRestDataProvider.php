@@ -32,9 +32,18 @@ class SimpleRestDataProvider extends AbstractDataProvider
 
     public function transformResponse(array $data, int $total): array
     {
+        $transformedData = [];
+        foreach ($data as $dto) {
+            if ($dto instanceof \Freema\ReactAdminApiBundle\Interface\DtoInterface) {
+                $transformedData[] = $dto->toArray();
+            } else {
+                $transformedData[] = $dto; // fallback for non-DTO data
+            }
+        }
+
         // Simple REST provider expects data directly as array, not wrapped in object
         // The total count is communicated via Content-Range header
-        return $data;
+        return $transformedData;
     }
 
     public function getType(): string
@@ -100,9 +109,9 @@ class SimpleRestDataProvider extends AbstractDataProvider
         if (is_string($filter)) {
             $decoded = json_decode($filter, true);
 
-            return $decoded ?? [];
+            return is_array($decoded) ? $decoded : [];
         }
 
-        return is_array($filter) ? $filter : [];
+        return [];
     }
 }

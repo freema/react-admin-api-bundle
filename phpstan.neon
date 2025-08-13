@@ -6,3 +6,4 @@ parameters:
         - dev
     checkMissingIterableValueType: false
     checkGenericClassInNonGenericObjectType: false
+    treatPhpDocTypesAsCertain: false

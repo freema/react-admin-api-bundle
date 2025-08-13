@@ -88,6 +88,104 @@ $event->sortItems(fn($a, $b) => $a->getName() <=> $b->getName());
 $stats = $event->getStatistics();
 ```
 
+### CRUD Events
+
+#### EntityCreatedEvent
+
+Dispatched after a new entity is created. Provides access to the created entity data.
+
+**Event Name**: `react_admin_api.entity_created`
+
+```php
+use Freema\ReactAdminApiBundle\Event\Crud\EntityCreatedEvent;
+
+$event = new EntityCreatedEvent($resource, $request, $requestData, $result);
+
+// Get the request data
+$requestData = $event->getRequestData(); // CreateDataRequest
+$dto = $requestData->getDataDto(); // AdminApiDto with data sent by client
+
+// Get the result
+$result = $event->getResult(); // CreateDataResult
+$createdEntity = $result->getData(); // AdminApiDto|null of created entity
+$success = $result->isSuccess(); // bool
+
+// Access entity properties (if created successfully)
+if ($createdEntity && $createdEntity->uuid) {
+    $entityUuid = $createdEntity->uuid;
+}
+
+// Get HTTP request information
+$clientIp = $event->getClientIp();
+$userAgent = $event->getUserAgent();
+$route = $event->getRouteName();
+```
+
+#### EntityUpdatedEvent
+
+Dispatched after an entity is updated. Provides access to both old and new entity data.
+
+**Event Name**: `react_admin_api.entity_updated`
+
+```php
+use Freema\ReactAdminApiBundle\Event\Crud\EntityUpdatedEvent;
+
+$event = new EntityUpdatedEvent($resource, $request, $requestData, $oldEntity, $result);
+
+// Get the request data
+$requestData = $event->getRequestData(); // UpdateDataRequest
+$resourceId = $requestData->getId(); // string|int
+$newDto = $requestData->getDataDto(); // AdminApiDto with new data
+
+// Get the old entity (before update)
+$oldEntity = $event->getOldEntity(); // AdminEntityInterface|null
+
+// Get the result
+$result = $event->getResult(); // UpdateDataResult
+$updatedEntity = $result->getData(); // AdminApiDto|null of updated entity
+$success = $result->isSuccess(); // bool
+
+// Compare old and new values
+if ($oldEntity && property_exists($newDto, 'status')) {
+    // Example: Check if status changed
+    $oldStatus = $oldEntity->getStatus();
+    $newStatus = $newDto->status;
+    
+    if ($oldStatus !== $newStatus) {
+        // Status was changed
+    }
+}
+```
+
+#### EntityDeletedEvent
+
+Dispatched after an entity is deleted. Provides access to the deleted entity data.
+
+**Event Name**: `react_admin_api.entity_deleted`
+
+```php
+use Freema\ReactAdminApiBundle\Event\Crud\EntityDeletedEvent;
+
+$event = new EntityDeletedEvent($resource, $request, $requestData, $deletedEntity, $result);
+
+// Get the request data
+$requestData = $event->getRequestData(); // DeleteDataRequest
+$resourceId = $requestData->getId(); // string|int
+
+// Get the deleted entity (captured before deletion)
+$deletedEntity = $event->getDeletedEntity(); // AdminEntityInterface|null
+
+// Get the result
+$result = $event->getResult(); // DeleteDataResult
+$success = $result->isSuccess(); // bool
+
+// Access deleted entity information
+if ($deletedEntity) {
+    $entityData = $deletedEntity->toArray();
+    // Log or process deleted entity data
+}
+```
+
 ### Common Events
 
 #### ResourceAccessEvent
@@ -194,6 +292,9 @@ class ReactAdminEventSubscriber implements EventSubscriberInterface
             'react_admin_api.resource_access' => 'onResourceAccess',
             'react_admin_api.pre_list' => 'onPreList',
             'react_admin_api.post_list' => 'onPostList',
+            'react_admin_api.entity_created' => 'onEntityCreated',
+            'react_admin_api.entity_updated' => 'onEntityUpdated',
+            'react_admin_api.entity_deleted' => 'onEntityDeleted',
             'react_admin_api.response' => 'onResponse',
         ];
     }
@@ -236,6 +337,53 @@ class ReactAdminEventSubscriber implements EventSubscriberInterface
             $event->mapItems(function ($item) {
                 return $this->dataSanitizer->sanitize($item);
             });
+        }
+    }
+
+    public function onEntityCreated(EntityCreatedEvent $event): void
+    {
+        // Log entity creation
+        $entity = $event->getResult()->getData();
+        if ($entity) {
+            $this->auditLogger->info('Entity created', [
+                'resource' => $event->getResource(),
+                'id' => $entity->id ?? $entity->uuid ?? 'unknown',
+                'user' => $this->security->getUser()?->getUserIdentifier(),
+                'data' => $entity->toArray()
+            ]);
+        }
+    }
+
+    public function onEntityUpdated(EntityUpdatedEvent $event): void
+    {
+        // Log entity updates with changes
+        $oldEntity = $event->getOldEntity();
+        $newData = $event->getRequestData()->getDataDto();
+        
+        if ($oldEntity) {
+            $changes = $this->detectChanges($oldEntity, $newData);
+            
+            $this->auditLogger->info('Entity updated', [
+                'resource' => $event->getResource(),
+                'id' => $event->getResourceId(),
+                'user' => $this->security->getUser()?->getUserIdentifier(),
+                'changes' => $changes
+            ]);
+        }
+    }
+
+    public function onEntityDeleted(EntityDeletedEvent $event): void
+    {
+        // Archive deleted entity data
+        $deletedEntity = $event->getDeletedEntity();
+        
+        if ($deletedEntity) {
+            $this->auditLogger->warning('Entity deleted', [
+                'resource' => $event->getResource(),
+                'id' => $event->getResourceId(),
+                'user' => $this->security->getUser()?->getUserIdentifier(),
+                'archived_data' => $deletedEntity->toArray()
+            ]);
         }
     }
 }
@@ -296,6 +444,9 @@ class AuditLogListener implements EventSubscriberInterface
     {
         return [
             'react_admin_api.resource_access' => 'logAccess',
+            'react_admin_api.entity_created' => 'logCreate',
+            'react_admin_api.entity_updated' => 'logUpdate',
+            'react_admin_api.entity_deleted' => 'logDelete',
             'react_admin_api.response' => 'logResponse',
         ];
     }
@@ -397,7 +548,69 @@ class NotificationListener
 }
 ```
 
-### 5. Caching
+### 5. Moderator Action Logging
+
+```php
+class ModeratorActionListener implements EventSubscriberInterface
+{
+    public function __construct(
+        private ModeratorLogService $logService,
+        private Security $security,
+        private EntityManagerInterface $em
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            'react_admin_api.entity_updated' => 'onEntityUpdated',
+            'react_admin_api.entity_deleted' => 'onEntityDeleted',
+        ];
+    }
+
+    public function onEntityUpdated(EntityUpdatedEvent $event): void
+    {
+        // Only log moderation actions
+        if ($event->getResource() !== 'posts') {
+            return;
+        }
+
+        $oldEntity = $event->getOldEntity();
+        $newData = $event->getRequestData()->getDataDto();
+        
+        // Check what changed
+        if ($oldEntity && property_exists($newData, 'status')) {
+            if ($oldEntity->getStatus() !== $newData->status) {
+                $this->logService->logModeratorAction(
+                    action: 'status_changed',
+                    targetType: 'post',
+                    targetId: $event->getResourceId(),
+                    oldValue: $oldEntity->getStatus(),
+                    newValue: $newData->status,
+                    moderator: $this->security->getUser(),
+                    ip: $event->getClientIp()
+                );
+            }
+        }
+    }
+
+    public function onEntityDeleted(EntityDeletedEvent $event): void
+    {
+        if ($event->getResource() !== 'posts') {
+            return;
+        }
+
+        $this->logService->logModeratorAction(
+            action: 'deleted',
+            targetType: 'post',
+            targetId: $event->getResourceId(),
+            moderator: $this->security->getUser(),
+            ip: $event->getClientIp()
+        );
+    }
+}
+```
+
+### 6. Caching
 
 ```php
 class CacheListener
@@ -528,6 +741,9 @@ public static function getSubscribedEvents(): array
 | `react_admin_api.resource_access` | `ResourceAccessEvent` | Before any operation | Yes |
 | `react_admin_api.pre_list` | `PreListEvent` | Before loading list data | Yes |
 | `react_admin_api.post_list` | `PostListEvent` | After loading list data | No |
+| `react_admin_api.entity_created` | `EntityCreatedEvent` | After entity creation | No |
+| `react_admin_api.entity_updated` | `EntityUpdatedEvent` | After entity update | No |
+| `react_admin_api.entity_deleted` | `EntityDeletedEvent` | After entity deletion | No |
 | `react_admin_api.response` | `ResponseEvent` | Before sending response | No |
 | `react_admin_api.exception` | `ApiExceptionEvent` | When exception occurs | No |
 

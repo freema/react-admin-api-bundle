@@ -17,7 +17,7 @@ class ResourceAccessEvent extends ReactAdminApiEvent
         string $resource,
         Request $request,
         private readonly string $operation,
-        private readonly ?string $resourceId = null
+        private readonly ?string $resourceId = null,
     ) {
         parent::__construct($resource, $request);
     }
@@ -78,7 +78,7 @@ class ResourceAccessEvent extends ReactAdminApiEvent
             'timestamp' => new \DateTimeImmutable(),
             'isRead' => $this->isReadOperation(),
             'isWrite' => $this->isWriteOperation(),
-            'isBulk' => $this->isBulkOperation()
+            'isBulk' => $this->isBulkOperation(),
         ];
     }
 
@@ -90,7 +90,7 @@ class ResourceAccessEvent extends ReactAdminApiEvent
         return [
             'query' => $this->getRequest()->query->all(),
             'headers' => $this->getRequest()->headers->all(),
-            'content' => $this->getRequest()->getContent()
+            'content' => $this->getRequest()->getContent(),
         ];
     }
 }

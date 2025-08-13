@@ -19,7 +19,7 @@ class PostListEvent extends ReactAdminApiEvent
         string $resource,
         Request $request,
         private readonly ListDataRequest $listDataRequest,
-        private ListDataResult $listDataResult
+        private ListDataResult $listDataResult,
     ) {
         parent::__construct($resource, $request);
     }
@@ -46,6 +46,7 @@ class PostListEvent extends ReactAdminApiEvent
     public function setListDataResult(ListDataResult $listDataResult): self
     {
         $this->listDataResult = $listDataResult;
+
         return $this;
     }
 
@@ -63,6 +64,7 @@ class PostListEvent extends ReactAdminApiEvent
     public function setData(array $data): self
     {
         $this->listDataResult = new ListDataResult($data, $this->listDataResult->getTotal());
+
         return $this;
     }
 
@@ -80,6 +82,7 @@ class PostListEvent extends ReactAdminApiEvent
     public function setTotal(int $total): self
     {
         $this->listDataResult = new ListDataResult($this->listDataResult->getData(), $total);
+
         return $this;
     }
 
@@ -91,6 +94,7 @@ class PostListEvent extends ReactAdminApiEvent
         $data = $this->listDataResult->getData();
         $data[] = $item;
         $this->listDataResult = new ListDataResult($data, $this->listDataResult->getTotal());
+
         return $this;
     }
 
@@ -105,6 +109,7 @@ class PostListEvent extends ReactAdminApiEvent
             $data = array_values($data); // Reindex array
             $this->listDataResult = new ListDataResult($data, $this->listDataResult->getTotal());
         }
+
         return $this;
     }
 
@@ -116,6 +121,7 @@ class PostListEvent extends ReactAdminApiEvent
         $data = array_filter($this->listDataResult->getData(), $callback);
         $data = array_values($data); // Reindex array
         $this->listDataResult = new ListDataResult($data, count($data));
+
         return $this;
     }
 
@@ -126,6 +132,7 @@ class PostListEvent extends ReactAdminApiEvent
     {
         $data = array_map($callback, $this->listDataResult->getData());
         $this->listDataResult = new ListDataResult($data, $this->listDataResult->getTotal());
+
         return $this;
     }
 
@@ -137,6 +144,7 @@ class PostListEvent extends ReactAdminApiEvent
         $data = $this->listDataResult->getData();
         usort($data, $callback);
         $this->listDataResult = new ListDataResult($data, $this->listDataResult->getTotal());
+
         return $this;
     }
 
@@ -145,12 +153,16 @@ class PostListEvent extends ReactAdminApiEvent
      */
     public function getStatistics(): array
     {
+        $offset = $this->listDataRequest->getOffset() ?? 0;
+        $limit = $this->listDataRequest->getLimit() ?? 10;
+        $page = $limit > 0 ? (int) floor($offset / $limit) + 1 : 1;
+        
         return [
             'count' => count($this->listDataResult->getData()),
             'total' => $this->listDataResult->getTotal(),
-            'page' => $this->listDataRequest->getPage(),
-            'perPage' => $this->listDataRequest->getPerPage(),
-            'hasMore' => $this->listDataResult->getTotal() > ($this->listDataRequest->getOffset() + count($this->listDataResult->getData()))
+            'page' => $page,
+            'perPage' => $limit,
+            'hasMore' => $this->listDataResult->getTotal() > ($offset + count($this->listDataResult->getData())),
         ];
     }
 }

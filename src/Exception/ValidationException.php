@@ -27,7 +27,7 @@ class ValidationException extends \Exception
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, string|array>
      */
     public function getErrors(): array
     {
@@ -44,7 +44,7 @@ class ValidationException extends \Exception
      *
      * @param ConstraintViolationListInterface $violations
      *
-     * @return array<string, string>
+     * @return array<string, string|array>
      */
     private function violationsToArray(ConstraintViolationListInterface $violations): array
     {
@@ -52,7 +52,38 @@ class ValidationException extends \Exception
 
         foreach ($violations as $violation) {
             $propertyPath = $violation->getPropertyPath();
-            $errors[$propertyPath] = $violation->getMessage();
+            $message = $violation->getMessage();
+
+            // Add context to the error message
+            $invalidValue = $violation->getInvalidValue();
+            $parameters = $violation->getParameters();
+
+            // Build a more descriptive error message
+            $detailedMessage = [
+                'message' => $message,
+                'field' => $propertyPath,
+                'value' => $invalidValue,
+            ];
+
+            // Add constraint-specific information
+            if (isset($parameters['{{ choices }}'])) {
+                $detailedMessage['allowed_values'] = $parameters['{{ choices }}'];
+            }
+
+            if (isset($parameters['{{ value }}'])) {
+                $detailedMessage['rejected_value'] = $parameters['{{ value }}'];
+            }
+
+            // If there are multiple violations for the same field, collect them in an array
+            if (!isset($errors[$propertyPath])) {
+                $errors[$propertyPath] = $detailedMessage;
+            } else {
+                // Convert to array if it's a single detailed message
+                if (isset($errors[$propertyPath]['message'])) {
+                    $errors[$propertyPath] = [$errors[$propertyPath]];
+                }
+                $errors[$propertyPath][] = $detailedMessage;
+            }
         }
 
         return $errors;

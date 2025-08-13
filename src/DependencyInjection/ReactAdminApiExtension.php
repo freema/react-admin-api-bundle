@@ -36,7 +36,6 @@ class ReactAdminApiExtension extends Extension
         if ($config['exception_listener']['enabled']) {
             $apiExceptionListenerDefinition = new Definition(ApiExceptionListener::class);
             $apiExceptionListenerDefinition->setArguments([
-                new Reference('router'),
                 $config['exception_listener']['enabled'],
                 $config['exception_listener']['debug_mode'],
             ]);
@@ -78,12 +77,20 @@ class ReactAdminApiExtension extends Extension
 
         // Register data provider factory
         $factoryDefinition = new Definition(DataProviderFactory::class);
+
+        // Only force provider if explicitly configured (not using default value)
+        $forceProvider = null;
+        if (isset($config['type'])) {
+            $forceProvider = $config['type'];
+        }
+
         $factoryDefinition->setArguments([
             [
                 new Reference(SimpleRestDataProvider::class),
                 new Reference(CustomDataProvider::class), // Custom provider as fallback
             ],
             $config['type'], // Default provider type
+            $forceProvider, // Force provider only if explicitly configured
         ]);
         $container->setDefinition(DataProviderFactory::class, $factoryDefinition);
     }

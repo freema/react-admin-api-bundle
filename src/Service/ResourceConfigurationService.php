@@ -26,8 +26,8 @@ class ResourceConfigurationService
         $resourceConfig = $this->getResourceConfig($resource);
 
         $resourceDtoClass = $resourceConfig['dto_class'];
-        if (!is_subclass_of($resourceDtoClass, DtoInterface::class)) {
-            throw new \LogicException(sprintf('Resource DTO class "%s" must implement DtoInterface', $resourceDtoClass));
+        if (!is_string($resourceDtoClass) || !is_subclass_of($resourceDtoClass, DtoInterface::class)) {
+            throw new \LogicException(sprintf('Resource DTO class "%s" must be a valid class string implementing DtoInterface', is_string($resourceDtoClass) ? $resourceDtoClass : gettype($resourceDtoClass)));
         }
 
         return $resourceDtoClass;

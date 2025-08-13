@@ -12,9 +12,9 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('react_admin_api');
-        $rootNode = $treeBuilder->getRootNode();
 
-        $rootNode
+        /** @phpstan-ignore-next-line */
+        $treeBuilder->getRootNode()
             ->children()
                 ->arrayNode('exception_listener')
                     ->addDefaultsIfNotSet()

@@ -17,7 +17,7 @@ abstract class ReactAdminApiEvent extends Event
 
     public function __construct(
         private readonly string $resource,
-        private readonly Request $request
+        private readonly Request $request,
     ) {
     }
 
@@ -45,6 +45,7 @@ abstract class ReactAdminApiEvent extends Event
     public function setContext(array $context): self
     {
         $this->context = $context;
+
         return $this;
     }
 
@@ -54,6 +55,7 @@ abstract class ReactAdminApiEvent extends Event
     public function addContext(string $key, mixed $value): self
     {
         $this->context[$key] = $value;
+
         return $this;
     }
 
@@ -80,6 +82,7 @@ abstract class ReactAdminApiEvent extends Event
     {
         $this->cancelled = true;
         $this->stopPropagation();
+
         return $this;
     }
 

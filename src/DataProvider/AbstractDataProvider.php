@@ -29,7 +29,7 @@ abstract class AbstractDataProvider implements DataProviderInterface
     protected function extractSort(Request $request): array
     {
         $sortField = $request->query->get('sort_field') ?? 'id';
-        $sortOrder = strtoupper($request->query->get('sort_order') ?? 'ASC');
+        $sortOrder = strtoupper((string) ($request->query->get('sort_order') ?? 'ASC'));
 
         return [$sortField, $sortOrder];
     }
@@ -47,10 +47,10 @@ abstract class AbstractDataProvider implements DataProviderInterface
         if (is_string($filter)) {
             $decoded = json_decode($filter, true);
 
-            return $decoded ?? [];
+            return is_array($decoded) ? $decoded : [];
         }
 
-        return is_array($filter) ? $filter : [];
+        return [];
     }
 
     /**
@@ -64,6 +64,9 @@ abstract class AbstractDataProvider implements DataProviderInterface
 
         // Convert filter array to JSON string
         $filterJson = !empty($filter) ? json_encode($filter) : null;
+        if ($filterJson === false) {
+            $filterJson = null;
+        }
 
         return new ListDataRequest(
             limit: $limit,

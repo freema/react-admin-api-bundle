@@ -36,37 +36,54 @@ class RestProvider implements ListDataRequestProviderInterface
 
         // Parse range parameter [start, end]
         if ($request->query->has('range')) {
-            $range = json_decode($request->query->get('range'), true);
-            if (is_array($range) && count($range) === 2) {
-                $rangeStart = (int) $range[0];
-                $rangeEnd = (int) $range[1];
-                $offset = $rangeStart;
-                $limit = $rangeEnd - $rangeStart + 1;
+            $rangeParam = $request->query->get('range');
+            if (is_string($rangeParam)) {
+                $range = json_decode($rangeParam, true);
+                if (is_array($range) && count($range) === 2) {
+                    $rangeStart = (int) $range[0];
+                    $rangeEnd = (int) $range[1];
+                    $offset = $rangeStart;
+                    $limit = $rangeEnd - $rangeStart + 1;
+                }
             }
         }
 
         // Parse sort parameter ["field", "order"]
         if ($request->query->has('sort')) {
-            $sort = json_decode($request->query->get('sort'), true);
-            if (is_array($sort) && count($sort) === 2) {
-                $sortField = $sort[0];
-                $sortOrder = strtoupper($sort[1]);
+            $sortParam = $request->query->get('sort');
+            if (is_string($sortParam)) {
+                $sort = json_decode($sortParam, true);
+                if (is_array($sort) && count($sort) === 2) {
+                    $sortField = $sort[0];
+                    $sortOrder = strtoupper((string) $sort[1]);
+                }
             }
         }
 
         // Parse filter parameter
-        $filter = $request->query->get('filter', null);
-        if ($filter) {
-            $filterValues = json_decode($filter, true) ?? [];
+        $filterParam = $request->query->get('filter', null);
+        if ($filterParam && is_string($filterParam)) {
+            $decoded = json_decode($filterParam, true);
+            $filterValues = is_array($decoded) ? $decoded : [];
+            $filter = $filterParam;
         }
 
+        // Ensure proper types for constructor
+        $filterJson = null;
+        if (!empty($filterValues)) {
+            $filterJson = json_encode($filterValues);
+            if ($filterJson === false) {
+                $filterJson = null;
+            }
+        }
+        
         return new ListDataRequest(
-            $limit,
-            $offset,
-            $sortField,
-            $sortOrder,
-            $filter,
-            $filterValues
+            limit: $limit,
+            offset: $offset,
+            sortField: is_string($sortField) ? $sortField : null,
+            sortOrder: is_string($sortOrder) ? $sortOrder : null,
+            filter: $filterJson,
+            filterValues: $filterValues
         );
     }
 }

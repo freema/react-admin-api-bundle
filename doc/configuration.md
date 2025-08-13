@@ -101,21 +101,47 @@ Common error types:
 - `DTO_CREATION_FAILED` - Error during DTO creation
 - `VALIDATION_ERROR` - Data validation failed
 
-### Data Provider Detection
+### Data Provider Configuration
 
-The bundle automatically detects the data provider format from the request:
+The bundle supports two data provider types:
 
-**Custom Provider** (default):
+1. **Custom Provider** (default) - Returns data wrapped in `{ data: [...], total: X }` format
+2. **Simple REST Provider** - Returns data directly as array, compatible with `ra-data-simple-rest`
+
+#### Automatic Detection (Default Behavior)
+
+By default, the bundle automatically detects the data provider format from the request parameters:
+
+**Custom Provider**:
 ```
 GET /api/users?sort_field=name&sort_order=ASC&page=1&per_page=10
+Response: { "data": [...], "total": 100 }
 ```
 
-**Simple REST Provider** (compatibility):
+**Simple REST Provider**:
 ```
 GET /api/users?sort=["name","ASC"]&range=[0,9]
+Response: [...] (with X-Total-Count header)
 ```
 
-No configuration needed - the bundle handles both formats automatically.
+#### Forced Provider Configuration
+
+You can override the automatic detection by configuring a specific provider type:
+
+```yaml
+react_admin_api:
+    data_provider:
+        type: simple_rest  # Force simple REST format
+        # OR
+        type: custom       # Force custom format (default)
+```
+
+When a specific type is configured, the bundle will always use that provider regardless of request parameters.
+
+**Use cases for forced configuration:**
+- When using React Admin's `simpleRestProvider` - set `type: simple_rest`
+- When all your frontend requests expect custom format - set `type: custom`
+- When you want consistent behavior regardless of request format
 
 ### DtoFactory Service
 

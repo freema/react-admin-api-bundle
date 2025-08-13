@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Freema\ReactAdminApiBundle\CreateTrait;
 use Freema\ReactAdminApiBundle\DeleteTrait;
+use Freema\ReactAdminApiBundle\FindTrait;
 use Freema\ReactAdminApiBundle\Dev\Dto\UserDto;
 use Freema\ReactAdminApiBundle\Dev\Entity\User;
 use Freema\ReactAdminApiBundle\Dto\AdminApiDto;
@@ -28,6 +29,7 @@ class UserRepository extends ServiceEntityRepository implements
     DataRepositoryDeleteInterface
 {
     use ListTrait;
+    use FindTrait;
     use CreateTrait;
     use UpdateTrait;
     use DeleteTrait;
@@ -40,17 +42,6 @@ class UserRepository extends ServiceEntityRepository implements
     public function getFullSearchFields(): array
     {
         return ['name', 'email'];
-    }
-    
-    public function findWithDto($id): ?AdminApiDto
-    {
-        $user = $this->find($id);
-        
-        if (!$user) {
-            return null;
-        }
-        
-        return UserDto::createFromEntity($user);
     }
     
     public static function mapToDto(AdminEntityInterface $entity): AdminApiDto

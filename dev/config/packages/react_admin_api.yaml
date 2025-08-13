@@ -11,3 +11,5 @@ react_admin_api:
             #     posts:
             #         dto_class: 'App\Dto\PostDto'
             #         relationship_method: 'getPosts'
+    data_provider:
+        type: 'simple_rest'

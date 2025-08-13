@@ -20,7 +20,7 @@ class ApiExceptionEvent extends ReactAdminApiEvent
         string $resource,
         Request $request,
         private readonly \Throwable $exception,
-        private readonly string $operation
+        private readonly string $operation,
     ) {
         parent::__construct($resource, $request);
     }
@@ -55,6 +55,7 @@ class ApiExceptionEvent extends ReactAdminApiEvent
     public function setResponse(JsonResponse $response): self
     {
         $this->response = $response;
+
         return $this;
     }
 
@@ -78,7 +79,7 @@ class ApiExceptionEvent extends ReactAdminApiEvent
             'file' => $this->exception->getFile(),
             'line' => $this->exception->getLine(),
             'trace' => $this->exception->getTraceAsString(),
-            'previous' => $this->exception->getPrevious() ? get_class($this->exception->getPrevious()) : null
+            'previous' => $this->exception->getPrevious() ? get_class($this->exception->getPrevious()) : null,
         ];
     }
 
@@ -122,29 +123,29 @@ class ApiExceptionEvent extends ReactAdminApiEvent
         if ($this->isValidationException()) {
             return 400;
         }
-        
+
         if ($this->isNotFoundException()) {
             return 404;
         }
-        
+
         return 500;
     }
 
     /**
      * Create a standardized error response
      */
-    public function createErrorResponse(string $error, string $message, int $statusCode = null): JsonResponse
+    public function createErrorResponse(string $error, string $message, ?int $statusCode = null): JsonResponse
     {
         $statusCode = $statusCode ?? $this->getSuggestedStatusCode();
-        
+
         $data = [
             'error' => $error,
             'message' => $message,
             'timestamp' => (new \DateTimeImmutable())->format('c'),
             'resource' => $this->getResource(),
-            'operation' => $this->operation
+            'operation' => $this->operation,
         ];
-        
+
         return new JsonResponse($data, $statusCode);
     }
 }

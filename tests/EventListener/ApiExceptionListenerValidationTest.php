@@ -27,7 +27,6 @@ class ApiExceptionListenerValidationTest extends TestCase
         $this->kernel = $this->createMock(HttpKernelInterface::class);
 
         $this->listener = new ApiExceptionListener(
-            $this->router,
             true, // enabled
             false // debug mode off
         );
@@ -124,7 +123,6 @@ class ApiExceptionListenerValidationTest extends TestCase
     {
         // Create listener with debug mode enabled
         $listener = new ApiExceptionListener(
-            $this->router,
             true, // enabled
             true  // debug mode on
         );
@@ -228,7 +226,6 @@ class ApiExceptionListenerValidationTest extends TestCase
     {
         // Create listener that is disabled
         $listener = new ApiExceptionListener(
-            $this->router,
             false, // disabled
             false
         );

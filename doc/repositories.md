@@ -6,6 +6,8 @@ This document describes the repository interfaces used by the ReactAdminApiBundl
 
 The bundle uses repositories to perform CRUD operations on your data. These repositories must implement specific interfaces depending on which operations you want to support:
 
+**Important**: If you're using Clean Architecture, see [Clean Architecture Integration](clean-architecture-integration.md) for proper layer placement of these interfaces.
+
 | Interface | Purpose | API Endpoint |
 |-----------|---------|--------------|
 | `DataRepositoryListInterface` | Listing resources with filtering and pagination | GET /api/resources |
@@ -90,6 +92,44 @@ class UserRepository extends EntityRepository implements
         return ['name', 'email'];
     }
     
+    protected function getAssociationsMap(): array
+    {
+        return [
+            'companyId' => [
+                'associationField' => 'company',
+                'targetEntity' => Company::class,
+            ],
+            'departmentId' => [
+                'associationField' => 'department', 
+                'targetEntity' => Department::class,
+            ],
+        ];
+    }
+    
+    protected function getCustomFilters(): array
+    {
+        return [
+            'isActive' => function(\Doctrine\ORM\QueryBuilder $qb, $value) {
+                $isActive = $value === 'true' || $value === true;
+                if ($isActive) {
+                    $qb->andWhere('e.status = :activeStatus')
+                       ->setParameter('activeStatus', 'active');
+                } else {
+                    $qb->andWhere('e.status != :activeStatus')
+                       ->setParameter('activeStatus', 'active');
+                }
+            },
+            'hasParent' => function(\Doctrine\ORM\QueryBuilder $qb, $value) {
+                $hasParent = $value === 'true' || $value === true;
+                if ($hasParent) {
+                    $qb->andWhere('e.parent IS NOT NULL');
+                } else {
+                    $qb->andWhere('e.parent IS NULL');
+                }
+            },
+        ];
+    }
+    
     public static function mapToDto(AdminEntityInterface $entity): AdminApiDto
     {
         return UserDto::createFromEntity($entity);
@@ -150,6 +190,114 @@ class UserRepository extends EntityRepository implements
             ->setParameter('entity', $entity);
     }
 }
+```
+
+## Filtering and Search Configuration
+
+The `ListTrait` provides several methods to configure how filtering and searching works:
+
+### Full Text Search Fields
+
+The `getFullSearchFields()` method defines which fields should be searched when the `q` (query) parameter is used:
+
+```php
+public function getFullSearchFields(): array
+{
+    return ['name', 'email', 'description'];
+}
+```
+
+### Association Mapping
+
+The `getAssociationsMap()` method maps filter field names to entity associations. This allows filtering by related entity IDs:
+
+```php
+protected function getAssociationsMap(): array
+{
+    return [
+        'companyId' => [
+            'associationField' => 'company',
+            'targetEntity' => Company::class,
+        ],
+        'departmentId' => [
+            'associationField' => 'department', 
+            'targetEntity' => Department::class,
+        ],
+    ];
+}
+```
+
+With this configuration:
+- A filter `companyId=123` becomes `WHERE e.company = 123`
+- A filter `departmentId=[1,2,3]` becomes `WHERE e.department IN (1,2,3)`
+
+### Custom Filters
+
+The `getCustomFilters()` method allows you to define completely custom filtering logic for fields that don't exist directly on the entity or need special processing:
+
+```php
+protected function getCustomFilters(): array
+{
+    return [
+        'isActive' => function(\Doctrine\ORM\QueryBuilder $qb, $value) {
+            $isActive = $value === 'true' || $value === true;
+            if ($isActive) {
+                $qb->andWhere('e.status = :activeStatus')
+                   ->setParameter('activeStatus', 'active');
+            } else {
+                $qb->andWhere('e.status != :activeStatus')
+                   ->setParameter('activeStatus', 'active');
+            }
+        },
+        'hasParent' => function(\Doctrine\ORM\QueryBuilder $qb, $value) {
+            $hasParent = $value === 'true' || $value === true;
+            if ($hasParent) {
+                $qb->andWhere('e.parent IS NOT NULL');
+            } else {
+                $qb->andWhere('e.parent IS NULL');
+            }
+        },
+        'dateRange' => function(\Doctrine\ORM\QueryBuilder $qb, $value) {
+            if (is_array($value) && count($value) === 2) {
+                $qb->andWhere('e.createdAt BETWEEN :dateFrom AND :dateTo')
+                   ->setParameter('dateFrom', $value[0])
+                   ->setParameter('dateTo', $value[1]);
+            }
+        },
+    ];
+}
+```
+
+### Filter Processing Order
+
+The `ListTrait` processes filters in this order:
+
+1. **Custom filters** - Handled by `getCustomFilters()` callbacks
+2. **Association filters** - Mapped using `getAssociationsMap()`
+3. **Standard field filters** - Applied directly to entity fields
+4. **Full text search** - Applied to fields from `getFullSearchFields()`
+
+### Usage Examples
+
+Frontend filter examples that work with the above configuration:
+
+```javascript
+// Standard field filter (entity has 'status' field)
+const filters = { status: 'active' };
+
+// Association filter (entity has 'company' association)
+const filters = { companyId: 123 };
+
+// Custom filter (no 'isActive' field on entity)
+const filters = { isActive: 'true' };
+
+// Multiple filters
+const filters = { 
+    status: 'active',
+    companyId: [1, 2, 3],
+    hasParent: 'false',
+    q: 'search term'
+};
 ```
 
 ## Non-Doctrine Repositories
