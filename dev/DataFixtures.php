@@ -16,12 +16,12 @@ class DataFixtures
 
     public function load(): void
     {
-        // Vytvoření schéma databáze
+        // Create database schema
         $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($this->entityManager);
         $metadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $schemaTool->createSchema($metadata);
 
-        // Přidání testovacích dat
+        // Add test data
         $user1 = new User();
         $user1->setName('John Doe');
         $user1->setEmail('john@example.com');
