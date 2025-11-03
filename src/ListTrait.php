@@ -32,8 +32,8 @@ trait ListTrait
             $sortDirection = $dataRequest->getSortOrder() === 'DESC' ? 'DESC' : 'ASC';
              
             // Use sort field mapping if defined by repository
-  +         $sortFieldMap = $this->getSortFieldMap();
-  +         $sortField = $sortFieldMap[$dataRequest->getSortField()] ?? 'e.'.$dataRequest->getSortField();
+            $sortFieldMap = $this->getSortFieldMap();
+            $sortField = $sortFieldMap[$dataRequest->getSortField()] ?? 'e.'.$dataRequest->getSortField();
             $qb->orderBy($sortField, $sortDirection);
         }
 
