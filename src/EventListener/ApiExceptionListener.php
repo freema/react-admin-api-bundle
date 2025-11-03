@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+
 class ApiExceptionListener implements EventSubscriberInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;

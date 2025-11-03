@@ -156,7 +156,7 @@ class PostListEvent extends ReactAdminApiEvent
         $offset = $this->listDataRequest->getOffset() ?? 0;
         $limit = $this->listDataRequest->getLimit() ?? 10;
         $page = $limit > 0 ? (int) floor($offset / $limit) + 1 : 1;
-        
+
         return [
             'count' => count($this->listDataResult->getData()),
             'total' => $this->listDataResult->getTotal(),

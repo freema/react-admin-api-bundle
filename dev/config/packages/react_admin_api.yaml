@@ -1,10 +1,10 @@
 react_admin_api:
     resources:
-        # Jednoduché mapování: resource path => DTO class
-        # Vše ostatní se odvozuje automaticky:
-        # - Entity class z DTO->getMappedEntityClass()
-        # - Repository z EntityManager->getRepository(entityClass)
-        # - Dostupné operace z implementovaných interfaces na repository
+        # Simple mapping: resource path => DTO class
+        # Everything else is derived automatically:
+        # - Entity class from DTO->getMappedEntityClass()
+        # - Repository from EntityManager->getRepository(entityClass)
+        # - Available operations from implemented interfaces on repository
         users:
             dto_class: 'Freema\ReactAdminApiBundle\Dev\Dto\UserDto'
             # related_resources:

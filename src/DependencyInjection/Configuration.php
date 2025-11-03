@@ -13,7 +13,7 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('react_admin_api');
 
-        /** @phpstan-ignore-next-line */
+        /* @phpstan-ignore-next-line */
         $treeBuilder->getRootNode()
             ->children()
                 ->arrayNode('exception_listener')

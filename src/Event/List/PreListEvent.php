@@ -160,7 +160,7 @@ class PreListEvent extends ReactAdminApiEvent
         $offset = $this->listDataRequest->getOffset() ?? 0;
         $limit = $this->listDataRequest->getLimit() ?? 10;
         $page = $limit > 0 ? (int) floor($offset / $limit) + 1 : 1;
-        
+
         return [
             'page' => $page,
             'perPage' => $limit,
@@ -177,7 +177,7 @@ class PreListEvent extends ReactAdminApiEvent
         // Convert page/perPage to offset/limit
         $offset = $page && $perPage ? ($page - 1) * $perPage : null;
         $limit = $perPage;
-        
+
         $filters = $this->listDataRequest->getFilterValues();
         $filterJson = count($filters) > 0 ? json_encode($filters) : null;
         if ($filterJson === false) {

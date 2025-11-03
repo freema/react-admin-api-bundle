@@ -63,7 +63,7 @@ class ValidationExceptionTest extends TestCase
         $this->assertSame($violations, $exception->getViolations());
 
         $errors = $exception->getErrors();
-        
+
         // Check that we have the correct structure with detailed error information
         $this->assertIsArray($errors['email']);
         $this->assertIsArray($errors['name']);
@@ -107,7 +107,7 @@ class ValidationExceptionTest extends TestCase
         $exception = new ValidationException($violations);
 
         $errors = $exception->getErrors();
-        
+
         $this->assertIsArray($errors['address.street']);
         $this->assertIsArray($errors['address.postalCode']);
         $this->assertEquals('Street is required', $errors['address.street']['message']);
@@ -139,7 +139,7 @@ class ValidationExceptionTest extends TestCase
         $exception = new ValidationException($violations);
 
         $errors = $exception->getErrors();
-        
+
         $this->assertIsArray($errors['roles[1]']);
         $this->assertIsArray($errors['tags[0]']);
         $this->assertEquals('Invalid role', $errors['roles[1]']['message']);
