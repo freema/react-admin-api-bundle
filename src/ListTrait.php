@@ -30,7 +30,11 @@ trait ListTrait
         // Apply sorting
         if ($dataRequest->getSortField()) {
             $sortDirection = $dataRequest->getSortOrder() === 'DESC' ? 'DESC' : 'ASC';
-            $qb->orderBy('e.'.$dataRequest->getSortField(), $sortDirection);
+             
+            // Use sort field mapping if defined by repository
+  +         $sortFieldMap = $this->getSortFieldMap();
+  +         $sortField = $sortFieldMap[$dataRequest->getSortField()] ?? 'e.'.$dataRequest->getSortField();
+            $qb->orderBy($sortField, $sortDirection);
         }
 
         // Apply pagination
@@ -190,5 +194,22 @@ trait ListTrait
     protected function getCountField(): string
     {
         return 'id';
+    }
+
+    /**
+     * Get sort field mapping for DTO fields to entity fields.
+     * This allows sorting by joined table fields or computed DTO properties.
+     *
+     * Example:
+     * return [
+     *     'regionName' => 'r.name',
+     *     'campaignTitle' => 'c.title',
+     * ];
+     *
+     * @return array<string, string>
+     */
+    protected function getSortFieldMap(): array
+    {
+        return [];
     }
 }
