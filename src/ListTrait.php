@@ -30,6 +30,8 @@ trait ListTrait
         // Apply sorting
         if ($dataRequest->getSortField()) {
             $sortDirection = $dataRequest->getSortOrder() === 'DESC' ? 'DESC' : 'ASC';
+
+            // Use sort field mapping if defined by repository
             $sortFieldMap = $this->getSortFieldMap();
             $sortField = $sortFieldMap[$dataRequest->getSortField()] ?? 'e.'.$dataRequest->getSortField();
             $qb->orderBy($sortField, $sortDirection);
@@ -195,8 +197,8 @@ trait ListTrait
     }
 
     /**
-     * Get the mapping of DTO field names to database field references for sorting.
-     * This allows sorting by fields from joined tables.
+     * Get sort field mapping for DTO fields to entity fields.
+     * This allows sorting by joined table fields or computed DTO properties.
      *
      * Example:
      * return [
