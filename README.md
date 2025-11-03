@@ -1,39 +1,39 @@
 # React Admin API Bundle
 
-Symfony bundle pro automatické generování REST API endpointů kompatibilních s [React Admin](https://marmelab.com/react-admin/). Bundle poskytuje kompletní infrastrukturu pro vytvoření CRUD API s minimální konfigurací - stačí vytvořit DTO třídu a bundle automaticky poskytne všechny potřebné endpointy.
+Symfony bundle for automatically generating REST API endpoints compatible with [React Admin](https://marmelab.com/react-admin/). The bundle provides a complete infrastructure for creating CRUD APIs with minimal configuration - just create a DTO class and the bundle automatically provides all necessary endpoints.
 
-## Hlavní funkce
+## Main Features
 
-- ✅ **Automatická registrace endpointů** - pouze na základě konfigurace resource → DTO
-- ✅ **CRUD operace** - GET, POST, PUT, DELETE s paginací, řazením a filtrováním  
-- ✅ **React Admin kompatibilita** - standardní response formáty
-- ✅ **Doctrine integrace** - využívá standardní Symfony/Doctrine patterns
-- ✅ **Trait-based repository implementace** - snadná implementace CRUD operací
-- ✅ **Type-safe DTO objekty** - čistá architektura s oddělením entity a API vrstvy
-- ✅ **Flexible configuration** - podpora related resources
+- ✅ **Automatic endpoint registration** - based only on resource → DTO configuration
+- ✅ **CRUD operations** - GET, POST, PUT, DELETE with pagination, sorting, and filtering
+- ✅ **React Admin compatibility** - standard response formats
+- ✅ **Doctrine integration** - uses standard Symfony/Doctrine patterns
+- ✅ **Trait-based repository implementation** - easy implementation of CRUD operations
+- ✅ **Type-safe DTO objects** - clean architecture with separation of entity and API layer
+- ✅ **Flexible configuration** - supports related resources
 
-## Architektura
+## Architecture
 
-Bundle je postaven na principu **resource path → DTO class mapping**. Vše ostatní se odvozuje automaticky:
+The bundle is built on the principle of **resource path → DTO class mapping**. Everything else is derived automatically:
 
 ```
-Resource path "users" → UserDto::class → User::class (z DTO) → UserRepository (z EntityManager)
+Resource path "users" → UserDto::class → User::class (from DTO) → UserRepository (from EntityManager)
 ```
 
-### Klíčové komponenty:
+### Key Components:
 
-1. **DTO (Data Transfer Object)** - definuje strukturu API a mapuje na entity
-2. **Repository traits** - poskytují standardní CRUD implementace
-3. **Resource Configuration Service** - spravuje mapování resources na DTO
-4. **Controllery** - automaticky zpracovávají HTTP požadavky
+1. **DTO (Data Transfer Object)** - defines the API structure and maps to entities
+2. **Repository traits** - provide standard CRUD implementations
+3. **Resource Configuration Service** - manages resource to DTO mappings
+4. **Controllers** - automatically handle HTTP requests
 
-## Instalace
+## Installation
 
 ```bash
 composer require freema/react-admin-api-bundle
 ```
 
-Zaregistrujte bundle v `config/bundles.php`:
+Register the bundle in `config/bundles.php`:
 ```php
 return [
     // ...
@@ -41,14 +41,14 @@ return [
 ];
 ```
 
-## Konfigurace
+## Configuration
 
-Vytvořte konfiguraci v `config/packages/react_admin_api.yaml`:
+Create configuration in `config/packages/react_admin_api.yaml`:
 
 ```yaml
 react_admin_api:
     resources:
-        # Jednoduché mapování: resource path => DTO class
+        # Simple mapping: resource path => DTO class
         users:
             dto_class: 'App\Dto\UserDto'
         products:
@@ -59,11 +59,11 @@ react_admin_api:
                     relationship_method: 'getCategories'
 ```
 
-## Použití
+## Usage
 
 ### 1. Entity
 
-Entity musí implementovat `AdminEntityInterface`:
+The entity must implement `AdminEntityInterface`:
 
 ```php
 namespace App\Entity;
@@ -79,20 +79,20 @@ class User implements AdminEntityInterface
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
-    
+
     #[ORM\Column(type: 'string', length: 255)]
     private string $name = '';
-    
+
     #[ORM\Column(type: 'string', length: 255, unique: true)]
     private string $email = '';
-    
-    // gettery a settery...
+
+    // getters and setters...
 }
 ```
 
-### 2. DTO (nejdůležitější část)
+### 2. DTO (the most important part)
 
-DTO definuje API strukturu a je klíčové pro bundle:
+The DTO defines the API structure and is key to the bundle:
 
 ```php
 namespace App\Dto;
@@ -107,34 +107,34 @@ class UserDto extends AdminApiDto
     public string $name = '';
     public string $email = '';
     public array $roles = [];
-    
+
     /**
-     * Klíčová metoda - říká bundle, na jakou entitu se DTO mapuje
+     * Key method - tells the bundle which entity the DTO maps to
      */
     public static function getMappedEntityClass(): string
     {
         return User::class;
     }
-    
+
     /**
-     * Vytvoří DTO z entity (pro čtení)
+     * Create DTO from entity (for reading)
      */
     public static function createFromEntity(AdminEntityInterface $entity): AdminApiDto
     {
         if (!$entity instanceof User) {
             throw new \InvalidArgumentException('Entity must be instance of User');
         }
-        
+
         $dto = new self();
         $dto->id = $entity->getId();
         $dto->name = $entity->getName();
         $dto->email = $entity->getEmail();
-        
+
         return $dto;
     }
-    
+
     /**
-     * Převede DTO na array pro API response
+     * Convert DTO to array for API response
      */
     public function toArray(): array
     {
@@ -150,7 +150,7 @@ class UserDto extends AdminApiDto
 
 ### 3. Repository
 
-Repository implementuje CRUD operace pomocí traits:
+The repository implements CRUD operations using traits:
 
 ```php
 namespace App\Repository;
@@ -172,100 +172,100 @@ use Freema\ReactAdminApiBundle\ListTrait;
 use Freema\ReactAdminApiBundle\UpdateTrait;
 
 class UserRepository extends ServiceEntityRepository implements
-    DataRepositoryListInterface,      // pro GET /api/users
-    DataRepositoryFindInterface,      // pro GET /api/users/{id}
-    DataRepositoryCreateInterface,    // pro POST /api/users
-    DataRepositoryUpdateInterface,    // pro PUT /api/users/{id}
-    DataRepositoryDeleteInterface     // pro DELETE /api/users/{id}
+    DataRepositoryListInterface,      // for GET /api/users
+    DataRepositoryFindInterface,      // for GET /api/users/{id}
+    DataRepositoryCreateInterface,    // for POST /api/users
+    DataRepositoryUpdateInterface,    // for PUT /api/users/{id}
+    DataRepositoryDeleteInterface     // for DELETE /api/users/{id}
 {
-    use ListTrait;    // implementuje list() metodu s paginací, řazením, filtrováním
-    use CreateTrait;  // implementuje create() metodu
-    use UpdateTrait;  // implementuje update() metodu
-    use DeleteTrait;  // implementuje delete() a deleteMany() metody
-    
+    use ListTrait;    // implements list() method with pagination, sorting, filtering
+    use CreateTrait;  // implements create() method
+    use UpdateTrait;  // implements update() method
+    use DeleteTrait;  // implements delete() and deleteMany() methods
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, User::class);
     }
-    
+
     /**
-     * Pole pro full-text search
+     * Fields for full-text search
      */
     public function getFullSearchFields(): array
     {
         return ['name', 'email'];
     }
-    
+
     /**
-     * Najde entitu a vrátí jako DTO
+     * Find entity and return as DTO
      */
     public function findWithDto($id): ?AdminApiDto
     {
         $user = $this->find($id);
         return $user ? UserDto::createFromEntity($user) : null;
     }
-    
+
     /**
-     * Mapuje entitu na DTO (používají traity)
+     * Map entity to DTO (used by traits)
      */
     public static function mapToDto(AdminEntityInterface $entity): AdminApiDto
     {
         return UserDto::createFromEntity($entity);
     }
-    
+
     /**
-     * Vytvoří entity z DTO (používá CreateTrait)
+     * Create entities from DTO (used by CreateTrait)
      */
     public function createEntitiesFromDto(AdminApiDto $dto): array
     {
         if (!$dto instanceof UserDto) {
             throw new \InvalidArgumentException('DTO must be instance of UserDto');
         }
-        
+
         $user = new User();
         $user->setName($dto->name);
         $user->setEmail($dto->email);
-        
+
         $this->getEntityManager()->persist($user);
-        
+
         return [$user];
     }
-    
+
     /**
-     * Aktualizuje entitu z DTO (používá UpdateTrait)
+     * Update entity from DTO (used by UpdateTrait)
      */
     public function updateEntityFromDto(AdminEntityInterface $entity, AdminApiDto $dto): AdminEntityInterface
     {
         if (!$entity instanceof User) {
             throw new \InvalidArgumentException('Entity must be instance of User');
         }
-        
+
         if (!$dto instanceof UserDto) {
             throw new \InvalidArgumentException('DTO must be instance of UserDto');
         }
-        
+
         $entity->setName($dto->name);
         $entity->setEmail($dto->email);
-        
+
         return $entity;
     }
 }
 ```
 
-## Generované endpointy
+## Generated Endpoints
 
-Po konfiguraci bundle automaticky vytvoří tyto endpointy:
+After configuration, the bundle automatically creates these endpoints:
 
-| Metoda | URL | Popis |
-|--------|-----|-------|
-| GET | `/api/users` | Seznam uživatelů s paginací, řazením, filtrováním |
-| GET | `/api/users/{id}` | Detail uživatele |
-| POST | `/api/users` | Vytvoření nového uživatele |
-| PUT | `/api/users/{id}` | Aktualizace uživatele |
-| DELETE | `/api/users/{id}` | Smazání uživatele |
-| DELETE | `/api/users` | Hromadné smazání (s filter) |
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/users` | List users with pagination, sorting, filtering |
+| GET | `/api/users/{id}` | User detail |
+| POST | `/api/users` | Create new user |
+| PUT | `/api/users/{id}` | Update user |
+| DELETE | `/api/users/{id}` | Delete user |
+| DELETE | `/api/users` | Bulk delete (with filter) |
 
-## Request/Response příklady
+## Request/Response Examples
 
 ### GET /api/users?page=1&perPage=10&sort=name&order=ASC
 ```json
@@ -288,24 +288,24 @@ Response:
 {"id": 3, "name": "New User", "email": "new@example.com"}
 ```
 
-## Vývojový režim
+## Development Mode
 
-Pro testování je připravena dev aplikace v `dev/` adresáři:
+A dev application is prepared for testing in the `dev/` directory:
 
 ```bash
-# Spuštění přes docker
+# Run via docker
 task dev:up
 
-# Nebo lokálně
+# Or locally
 cd dev && php index.php
 ```
 
-Dev aplikace používá:
-- SQLite v paměti (rychlé testování)
-- Automatickou inicializaci databáze s test daty
-- Minimalistickou konfiguraci
+The dev application uses:
+- In-memory SQLite (fast testing)
+- Automatic database initialization with test data
+- Minimal configuration
 
-## Pokročilé funkce
+## Advanced Features
 
 ### Related Resources
 
@@ -320,33 +320,33 @@ react_admin_api:
                     relationship_method: 'getPosts'
 ```
 
-Vygeneruje endpoint: `GET /api/users/{id}/posts`
+Generates endpoint: `GET /api/users/{id}/posts`
 
 ### Custom Repository
 
-Pokud potřebujete custom repository logiku, stačí implementovat potřebné interfaces:
+If you need custom repository logic, just implement the required interfaces:
 
 ```php
 class CustomUserRepository implements DataRepositoryListInterface
 {
     public function list(ListDataRequest $request): ListDataResult
     {
-        // Vaše custom logika
+        // Your custom logic
     }
 }
 ```
 
-## Testování
+## Testing
 
-Bundle obsahuje kompletní test suite v `tests/` adresáři:
+The bundle contains a complete test suite in the `tests/` directory:
 
 ```bash
-composer test        # PHPUnit testy
+composer test        # PHPUnit tests
 composer test:php    # PHP syntax check
 composer lint        # Code style check
 ```
 
-## Podporované verze
+## Supported Versions
 
 - PHP 8.2+
 - Symfony 6.4+ / 7.1+
@@ -356,6 +356,6 @@ composer lint        # Code style check
 
 MIT License
 
-## Příspěvky
+## Contributing
 
-Příspěvky jsou vítány! Prosím vytvořte issue nebo pull request na GitHub.
+Contributions are welcome! Please create an issue or pull request on GitHub.

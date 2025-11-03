@@ -26,5 +26,5 @@ class ResourceControllerTest extends TestCase
         $this->assertInstanceOf(ResourceController::class, $controller);
     }
 
-    // Další testy budou přidány později
+    // More tests will be added later
 }

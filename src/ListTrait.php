@@ -30,7 +30,7 @@ trait ListTrait
         // Apply sorting
         if ($dataRequest->getSortField()) {
             $sortDirection = $dataRequest->getSortOrder() === 'DESC' ? 'DESC' : 'ASC';
-             
+
             // Use sort field mapping if defined by repository
             $sortFieldMap = $this->getSortFieldMap();
             $sortField = $sortFieldMap[$dataRequest->getSortField()] ?? 'e.'.$dataRequest->getSortField();

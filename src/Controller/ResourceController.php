@@ -6,6 +6,7 @@ namespace Freema\ReactAdminApiBundle\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Freema\ReactAdminApiBundle\DataProvider\DataProviderFactory;
+use Freema\ReactAdminApiBundle\Dto\AdminApiDto;
 use Freema\ReactAdminApiBundle\Event\Common\ResourceAccessEvent;
 use Freema\ReactAdminApiBundle\Event\Common\ResponseEvent;
 use Freema\ReactAdminApiBundle\Event\Crud\EntityCreatedEvent;
@@ -21,7 +22,6 @@ use Freema\ReactAdminApiBundle\Interface\DataRepositoryFindInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryListInterface;
 use Freema\ReactAdminApiBundle\Interface\DataRepositoryUpdateInterface;
 use Freema\ReactAdminApiBundle\Interface\DtoInterface;
-use Freema\ReactAdminApiBundle\Dto\AdminApiDto;
 use Freema\ReactAdminApiBundle\Request\CreateDataRequest;
 use Freema\ReactAdminApiBundle\Request\DeleteDataRequest;
 use Freema\ReactAdminApiBundle\Request\DeleteManyDataRequest;

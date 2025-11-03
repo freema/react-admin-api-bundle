@@ -61,7 +61,7 @@ class CustomProvider implements ListDataRequestProviderInterface
                 $filterJson = null;
             }
         }
-        
+
         return new ListDataRequest(
             limit: $limit,
             offset: $offset,

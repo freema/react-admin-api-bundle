@@ -67,6 +67,7 @@ class ResponseEvent extends ReactAdminApiEvent
         if ($content === false) {
             return [];
         }
+
         return json_decode($content, true) ?? [];
     }
 
