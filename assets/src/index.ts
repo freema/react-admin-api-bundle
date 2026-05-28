@@ -1,14 +1,19 @@
 /**
- * React Admin API Bundle - Frontend Assets
- * 
- * This package provides data provider for React Admin applications
- * that integrate with the React Admin API Bundle for Symfony.
+ * React Admin API Bundle — Frontend Assets
+ *
+ * This package provides a TypeScript data provider for React Admin applications that
+ * integrate with the Freema\ReactAdminApiBundle Symfony bundle.
  */
 
 export {
     createDataProvider,
     customDataProvider,
 } from './data-provider';
+
+export { createCookieAuthProvider } from './auth/cookieAuthProvider';
+export type { CookieAuthOptions } from './auth/cookieAuthProvider';
+
+export { containsFiles, toFormData } from './upload/multipart';
 
 export type {
     ReactAdminApiOptions,
@@ -20,5 +25,4 @@ export type {
     DeleteResponse,
 } from './types';
 
-// Default export
 export { default } from './data-provider';
