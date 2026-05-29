@@ -16,7 +16,7 @@ final class FilterOperatorParserTest extends TestCase
         $this->parser = new FilterOperatorParser();
     }
 
-    public function testBareFieldDefaultsToEq(): void
+    public function test_bare_field_defaults_to_eq(): void
     {
         self::assertSame(['email', 'eq'], $this->parser->parse('email'));
     }
@@ -46,18 +46,18 @@ final class FilterOperatorParserTest extends TestCase
     /**
      * @dataProvider suffixCases
      */
-    public function testParsesKnownSuffixes(string $key, string $expectedField, string $expectedOp): void
+    public function test_parses_known_suffixes(string $key, string $expectedField, string $expectedOp): void
     {
         self::assertSame([$expectedField, $expectedOp], $this->parser->parse($key));
     }
 
-    public function testNeverLeavesEmptyFieldName(): void
+    public function test_never_leaves_empty_field_name(): void
     {
         // '_gte' alone is treated as a bare field (no real field name in front).
         self::assertSame(['_gte', 'eq'], $this->parser->parse('_gte'));
     }
 
-    public function testSupportedOperatorsAreUnique(): void
+    public function test_supported_operators_are_unique(): void
     {
         $ops = $this->parser->supportedOperators();
         self::assertSame($ops, array_values(array_unique($ops)));
