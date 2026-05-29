@@ -51,7 +51,7 @@ final class EtagGenerator
             return $entity->getId();
         }
         if (property_exists($entity, 'id')) {
-            return $entity->id ?? null; // @phpstan-ignore-line
+            return $entity->id ?? null;
         }
 
         return null;
@@ -63,7 +63,7 @@ final class EtagGenerator
             return $entity->getVersion();
         }
         if (property_exists($entity, 'version')) {
-            return $entity->version ?? null; // @phpstan-ignore-line
+            return $entity->version ?? null;
         }
 
         return null;
