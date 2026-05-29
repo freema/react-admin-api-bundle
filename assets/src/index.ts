@@ -10,17 +10,15 @@ export {
     customDataProvider,
 } from './data-provider';
 
-<<<<<<< HEAD
-export { createCookieAuthProvider } from './auth/cookieAuthProvider';
-export type { CookieAuthOptions } from './auth/cookieAuthProvider';
-
-export { containsFiles, toFormData } from './upload/multipart';
-=======
 export { combineSignals, timeoutSignal } from './abortSignal';
 
 export { getResourceQueryKeys } from './queryKeys';
 export type { ResourceQueryKeys } from './queryKeys';
->>>>>>> b5792f9e32c0231675a94cc9666580186be4e273
+
+export { createCookieAuthProvider } from './auth/cookieAuthProvider';
+export type { CookieAuthOptions } from './auth/cookieAuthProvider';
+
+export { containsFiles, toFormData } from './upload/multipart';
 
 export type {
     ReactAdminApiOptions,
