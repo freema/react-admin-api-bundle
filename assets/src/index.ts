@@ -15,6 +15,11 @@ export { combineSignals, timeoutSignal } from './abortSignal';
 export { getResourceQueryKeys } from './queryKeys';
 export type { ResourceQueryKeys } from './queryKeys';
 
+export { createCookieAuthProvider } from './auth/cookieAuthProvider';
+export type { CookieAuthOptions } from './auth/cookieAuthProvider';
+
+export { containsFiles, toFormData } from './upload/multipart';
+
 export type {
     ReactAdminApiOptions,
     DataProviderFactory,
