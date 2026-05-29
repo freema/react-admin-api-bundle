@@ -42,33 +42,33 @@ final class EtagGeneratorTest extends TestCase
         $this->generator = new EtagGenerator();
     }
 
-    public function testEtagIsStableForTheSameEntityRevision(): void
+    public function test_etag_is_stable_for_the_same_entity_revision(): void
     {
         $entity = new EtagFixtureEntity(1, 5, new \DateTimeImmutable('2026-01-01T00:00:00Z'));
         self::assertSame($this->generator->generate($entity), $this->generator->generate($entity));
     }
 
-    public function testEtagChangesWhenVersionChanges(): void
+    public function test_etag_changes_when_version_changes(): void
     {
         $a = new EtagFixtureEntity(1, 5, new \DateTimeImmutable('2026-01-01T00:00:00Z'));
         $b = new EtagFixtureEntity(1, 6, new \DateTimeImmutable('2026-01-01T00:00:00Z'));
         self::assertNotSame($this->generator->generate($a), $this->generator->generate($b));
     }
 
-    public function testEtagChangesWhenUpdatedAtChanges(): void
+    public function test_etag_changes_when_updated_at_changes(): void
     {
         $a = new EtagFixtureEntity(1, 5, new \DateTimeImmutable('2026-01-01T00:00:00Z'));
         $b = new EtagFixtureEntity(1, 5, new \DateTimeImmutable('2026-01-01T00:00:01Z'));
         self::assertNotSame($this->generator->generate($a), $this->generator->generate($b));
     }
 
-    public function testMatchesAcceptsWildcardOrExactValue(): void
+    public function test_matches_accepts_wildcard_or_exact_value(): void
     {
         $entity = new EtagFixtureEntity(1, 5);
         $tag = $this->generator->generate($entity);
         self::assertTrue($this->generator->matches('*', $tag));
         self::assertTrue($this->generator->matches($tag, $tag));
-        self::assertTrue($this->generator->matches('"foo", ' . $tag, $tag));
+        self::assertTrue($this->generator->matches('"foo", '.$tag, $tag));
         self::assertFalse($this->generator->matches('W/"different"', $tag));
     }
 }
