@@ -1,18 +1,27 @@
 import { customDataProvider } from './customDataProvider';
-import type { DataProviderFactory } from './types';
+import type { DataProviderFactory, ReactAdminApiOptions } from './types';
 
 /**
- * Create custom data provider for React Admin API Bundle
+ * Create custom data provider for React Admin API Bundle.
+ *
+ * @example
+ *   const dataProvider = createDataProvider('/api/admin');
+ *
+ * @example With cookie auth + 30s timeout:
+ *   const dataProvider = createDataProvider('/api/admin', {
+ *     timeoutMs: 30_000,
+ *     fetchOptions: { credentials: 'include' },
+ *   });
  */
-export const createDataProvider: DataProviderFactory = (apiUrl: string) => {
-    return customDataProvider(apiUrl);
+export const createDataProvider: DataProviderFactory = (
+    apiUrl: string,
+    opts?: ReactAdminApiOptions,
+) => {
+    return customDataProvider(apiUrl, opts);
 };
 
-// Export individual providers
 export { customDataProvider };
 
-// Export types
-export type { DataProviderFactory };
+export type { DataProviderFactory, ReactAdminApiOptions };
 
-// Default export
 export default createDataProvider;
