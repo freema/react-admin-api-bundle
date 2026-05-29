@@ -66,7 +66,7 @@ final class OpenApiSchemaBuilderTest extends TestCase
         $this->builder = new OpenApiSchemaBuilder($config, 'Fixture API', '1.0.0', '/api');
     }
 
-    public function testBuildEmitsPathsForEveryResource(): void
+    public function test_build_emits_paths_for_every_resource(): void
     {
         $spec = $this->builder->build();
         self::assertSame('3.1.0', $spec['openapi']);
@@ -79,7 +79,7 @@ final class OpenApiSchemaBuilderTest extends TestCase
         self::assertArrayHasKey('delete', $spec['paths']['/api/fixtures/{id}']);
     }
 
-    public function testBuildEmitsComponentSchemaWithCorrectShape(): void
+    public function test_build_emits_component_schema_with_correct_shape(): void
     {
         $spec = $this->builder->build();
         $schema = $spec['components']['schemas']['SchemaBuilderFixtureDto'];
@@ -102,7 +102,7 @@ final class OpenApiSchemaBuilderTest extends TestCase
         self::assertNotContains('description', $schema['required']);
     }
 
-    public function testListOperationDocumentsPaginationParameters(): void
+    public function test_list_operation_documents_pagination_parameters(): void
     {
         $spec = $this->builder->build();
         $params = array_column($spec['paths']['/api/fixtures']['get']['parameters'], 'name');

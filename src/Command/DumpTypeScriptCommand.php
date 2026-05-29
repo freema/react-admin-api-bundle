@@ -69,14 +69,17 @@ final class DumpTypeScriptCommand extends Command
             $dir = dirname($destination);
             if (!is_dir($dir) && !mkdir($dir, 0o755, true) && !is_dir($dir)) {
                 $output->writeln(sprintf('<error>Could not create directory %s</error>', $dir));
+
                 return Command::FAILURE;
             }
             file_put_contents($destination, $emitted);
             $output->writeln(sprintf('<info>TypeScript definitions written to %s</info>', $destination));
+
             return Command::SUCCESS;
         }
 
         $output->write($emitted);
+
         return Command::SUCCESS;
     }
 
@@ -102,6 +105,7 @@ final class DumpTypeScriptCommand extends Command
             );
         }
         $lines[] = '}';
+
         return $lines;
     }
 
@@ -116,12 +120,15 @@ final class DumpTypeScriptCommand extends Command
                 fn (\ReflectionType $t) => $this->mapTsName($t instanceof \ReflectionNamedType ? $t->getName() : 'mixed'),
                 $type->getTypes(),
             );
+
             return implode(' | ', array_unique($parts));
         }
         if ($type instanceof \ReflectionNamedType) {
             $mapped = $this->mapTsName($type->getName());
-            return $type->allowsNull() ? $mapped . ' | null' : $mapped;
+
+            return $type->allowsNull() ? $mapped.' | null' : $mapped;
         }
+
         return 'unknown';
     }
 
@@ -141,6 +148,7 @@ final class DumpTypeScriptCommand extends Command
     private function shortName(string $fqcn): string
     {
         $parts = explode('\\', $fqcn);
+
         return (string) end($parts);
     }
 }

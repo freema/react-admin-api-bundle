@@ -43,8 +43,8 @@ final class OpenApiSchemaBuilder
             $schemas[$schemaName] = $this->buildSchemaForDto($dtoClass);
 
             $basePath = sprintf('%s/%s', rtrim($this->apiPrefix, '/'), $resource);
-            $itemPath = $basePath . '/{id}';
-            $ref = ['$ref' => '#/components/schemas/' . $schemaName];
+            $itemPath = $basePath.'/{id}';
+            $ref = ['$ref' => '#/components/schemas/'.$schemaName];
 
             $paths[$basePath] = $this->mergePathItem($paths[$basePath] ?? [], [
                 'get' => $this->buildListOperation($resource, $ref),
@@ -139,6 +139,7 @@ final class OpenApiSchemaBuilder
             if ($type->allowsNull()) {
                 $schema['nullable'] = true;
             }
+
             return $schema;
         }
 
@@ -151,6 +152,7 @@ final class OpenApiSchemaBuilder
         if ($type === null) {
             return true;
         }
+
         return $type->allowsNull();
     }
 
@@ -178,6 +180,7 @@ final class OpenApiSchemaBuilder
     private function schemaName(string $dtoClass): string
     {
         $parts = explode('\\', $dtoClass);
+
         return (string) end($parts);
     }
 
@@ -192,6 +195,7 @@ final class OpenApiSchemaBuilder
         foreach ($additions as $key => $value) {
             $existing[$key] = $value;
         }
+
         return $existing;
     }
 
