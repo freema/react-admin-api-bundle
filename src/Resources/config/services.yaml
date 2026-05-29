@@ -21,7 +21,7 @@ services:
     Freema\ReactAdminApiBundle\Request\Provider\List\CustomProvider:
         tags:
             - { name: 'react_admin_api.list_data_request_provider' }
-    
+
     # Request Factory
     Freema\ReactAdminApiBundle\Request\ListDataRequestFactory:
         public: true
@@ -29,3 +29,18 @@ services:
     # Services
     Freema\ReactAdminApiBundle\Service\:
         resource: '../../Service/'
+
+    # OpenAPI / TypeScript codegen (T12)
+    Freema\ReactAdminApiBundle\OpenApi\OpenApiSchemaBuilder:
+        arguments:
+            $resourceConfiguration: '@Freema\ReactAdminApiBundle\Service\ResourceConfigurationService'
+
+    Freema\ReactAdminApiBundle\Command\DumpOpenApiCommand:
+        arguments:
+            $schemaBuilder: '@Freema\ReactAdminApiBundle\OpenApi\OpenApiSchemaBuilder'
+        tags: ['console.command']
+
+    Freema\ReactAdminApiBundle\Command\DumpTypeScriptCommand:
+        arguments:
+            $resourceConfiguration: '@Freema\ReactAdminApiBundle\Service\ResourceConfigurationService'
+        tags: ['console.command']
