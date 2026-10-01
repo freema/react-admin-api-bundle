@@ -6,8 +6,9 @@ namespace Freema\ReactAdminApiBundle\Request;
 
 /**
  * Parse a react-admin filter key like `createdAt_gte` or `email_contains` into a
- * (field, operator) tuple. Used by ListTrait::applyFilters to translate the
- * incoming query string into Doctrine QueryBuilder predicates.
+ * (field, operator) tuple, for a repository's own applyFilters() that turns the
+ * incoming query string into Doctrine QueryBuilder predicates. The parser does
+ * not validate the field: check it against an allowlist before using it in DQL.
  *
  * Backward compatible: a bare key like `email` resolves to ('email', 'eq').
  */

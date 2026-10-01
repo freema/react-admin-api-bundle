@@ -35,7 +35,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -67,8 +67,10 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         // Get appropriate data provider for the request
         $dataProvider = $this->dataProviderFactory->getProvider($request);
 
-        // Transform request using data provider
-        $requestData = $dataProvider->transformListRequest($request);
+        // Transform request using data provider. The DTO class lets the
+        // repository limit filters and sorting to fields the resource exposes.
+        $dtoClass = $this->getResourceDtoClass($resource);
+        $requestData = $dataProvider->transformListRequest($request)->withDtoClass($dtoClass);
 
         // Dispatch pre-list event
         $preListEvent = new PreListEvent($resource, $request, $requestData);
@@ -80,6 +82,9 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
 
         // Use potentially modified request data
         $requestData = $preListEvent->getListDataRequest();
+        if ($requestData->getDtoClass() === null) {
+            $requestData = $requestData->withDtoClass($dtoClass);
+        }
         $entityClass = $this->getResourceEntityClass($resource);
 
         $repository = $entityManager->getRepository($entityClass);
@@ -132,6 +137,10 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         EntityManagerInterface $entityManager,
     ): JsonResponse {
         $requestData = new DeleteManyDataRequest($request);
+        if (!$this->dispatchResourceAccessEvent($resource, $request, 'deleteMany', null, ['ids' => $requestData->getIds()])) {
+            return $this->createAccessDeniedResponse();
+        }
+
         $entityClass = $this->getResourceEntityClass($resource);
 
         $repository = $entityManager->getRepository($entityClass);
@@ -148,8 +157,13 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     public function getEntity(
         string $resource,
         string $id,
+        Request $request,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
+        if (!$this->dispatchResourceAccessEvent($resource, $request, 'get', $id)) {
+            return $this->createAccessDeniedResponse();
+        }
+
         $entityClass = $this->getResourceEntityClass($resource);
         $repository = $entityManager->getRepository($entityClass);
         if (!$repository instanceof DataRepositoryFindInterface) {
@@ -177,8 +191,12 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
+        if (!$this->dispatchResourceAccessEvent($resource, $request, 'create')) {
+            return $this->createAccessDeniedResponse();
+        }
+
         $data = json_decode($request->getContent(), true);
-        if (null === $data) {
+        if (!is_array($data)) {
             return new JsonResponse(
                 ['error' => 'Invalid JSON provided'],
                 Response::HTTP_BAD_REQUEST
@@ -225,8 +243,12 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
+        if (!$this->dispatchResourceAccessEvent($resource, $request, 'update', $id)) {
+            return $this->createAccessDeniedResponse();
+        }
+
         $data = json_decode($request->getContent(), true);
-        if (null === $data) {
+        if (!is_array($data)) {
             return new JsonResponse(
                 ['error' => 'Invalid JSON provided'],
                 Response::HTTP_BAD_REQUEST
@@ -280,6 +302,10 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
         Request $request,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
+        if (!$this->dispatchResourceAccessEvent($resource, $request, 'delete', $id)) {
+            return $this->createAccessDeniedResponse();
+        }
+
         $entityClass = $this->getResourceEntityClass($resource);
 
         // Get entity before deletion for logging
@@ -328,11 +354,16 @@ class ResourceController extends AbstractController implements LoggerAwareInterf
     }
 
     /**
-     * Dispatch resource access event and check if operation is allowed
+     * Dispatch resource access event and check if operation is allowed.
+     * Every action calls this before it reads the request body or touches
+     * the repository.
+     *
+     * @param array<string, mixed> $context
      */
-    private function dispatchResourceAccessEvent(string $resource, Request $request, string $operation, ?string $resourceId = null): bool
+    private function dispatchResourceAccessEvent(string $resource, Request $request, string $operation, ?string $resourceId = null, array $context = []): bool
     {
         $accessEvent = new ResourceAccessEvent($resource, $request, $operation, $resourceId);
+        $accessEvent->setContext($context);
         $this->eventDispatcher->dispatch($accessEvent, 'react_admin_api.resource_access');
 
         return !$accessEvent->isCancelled();

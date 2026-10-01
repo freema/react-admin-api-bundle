@@ -8,8 +8,13 @@ use Freema\ReactAdminApiBundle\Event\ReactAdminApiEvent;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Event dispatched on every resource access
- * Useful for logging, audit trails, and access control
+ * Event dispatched before every resource access: list, get, create, update,
+ * delete, deleteMany, and both halves of a related-resource list (`get` on the
+ * parent, `list` on the related resource with `parentResource` and `parentId`
+ * in the context). Cancelling it answers 403 before the request body is used
+ * or the repository is called.
+ *
+ * Useful for logging, audit trails, and access control.
  */
 class ResourceAccessEvent extends ReactAdminApiEvent
 {
@@ -23,7 +28,7 @@ class ResourceAccessEvent extends ReactAdminApiEvent
     }
 
     /**
-     * Get the operation being performed (list, get, create, update, delete)
+     * Get the operation being performed (list, get, create, update, delete, deleteMany)
      */
     public function getOperation(): string
     {
@@ -51,7 +56,7 @@ class ResourceAccessEvent extends ReactAdminApiEvent
      */
     public function isWriteOperation(): bool
     {
-        return in_array($this->operation, ['create', 'update', 'delete'], true);
+        return in_array($this->operation, ['create', 'update', 'delete', 'deleteMany'], true);
     }
 
     /**

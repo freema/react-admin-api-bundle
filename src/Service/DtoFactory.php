@@ -10,7 +10,10 @@ use Freema\ReactAdminApiBundle\Exception\DtoInterfaceNotImplementedException;
 use Freema\ReactAdminApiBundle\Interface\DtoInterface;
 
 /**
- * Factory for creating DTO instances from array data
+ * Factory for creating DTO instances from array data.
+ *
+ * Request keys are assigned to the DTO's public, non-static properties only;
+ * unknown keys and non-public properties are ignored.
  */
 class DtoFactory
 {
@@ -37,15 +40,20 @@ class DtoFactory
             $dto = $reflection->newInstance();
 
             foreach ($data as $property => $value) {
-                if ($reflection->hasProperty($property)) {
-                    $reflectionProperty = $reflection->getProperty($property);
-
-                    // Make property accessible
-                    $reflectionProperty->setAccessible(true);
-
-                    // Set the value
-                    $reflectionProperty->setValue($dto, $value);
+                $property = (string) $property;
+                if (!$reflection->hasProperty($property)) {
+                    continue;
                 }
+
+                // Only the public, non-static properties are the DTO's API
+                // fields. Private, protected and static ones are internal
+                // state a request must not be able to set.
+                $reflectionProperty = $reflection->getProperty($property);
+                if (!$reflectionProperty->isPublic() || $reflectionProperty->isStatic()) {
+                    continue;
+                }
+
+                $reflectionProperty->setValue($dto, $value);
             }
 
             return $dto;

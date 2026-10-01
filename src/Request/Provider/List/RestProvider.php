@@ -77,9 +77,11 @@ class RestProvider implements ListDataRequestProviderInterface
             }
         }
 
+        // Without a usable range, return the first page of the largest size
+        // instead of every row.
         return new ListDataRequest(
-            limit: $limit,
-            offset: $offset,
+            limit: $limit ?? ListDataRequest::MAX_LIMIT,
+            offset: $offset ?? 0,
             sortField: is_string($sortField) ? $sortField : null,
             sortOrder: is_string($sortOrder) ? $sortOrder : null,
             filter: $filterJson,

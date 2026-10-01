@@ -33,10 +33,12 @@ class CustomProvider implements ListDataRequestProviderInterface
         $page = $request->query->has('page') ? (int) $request->query->get('page') : null;
         $perPage = $request->query->has('per_page') ? (int) $request->query->get('per_page') : null;
 
-        $limit = $perPage;
-        $offset = null;
+        // Without per_page, return the first page of the largest size instead
+        // of every row. The page is bounded before the offset is computed.
+        $limit = max(1, min($perPage ?? ListDataRequest::MAX_LIMIT, ListDataRequest::MAX_LIMIT));
+        $offset = 0;
         if ($page !== null && $perPage !== null) {
-            $offset = ($page - 1) * $perPage;
+            $offset = (max(1, $page) - 1) * $limit;
         }
 
         $sortField = $request->query->get('sort_field', null);

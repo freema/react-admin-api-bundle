@@ -37,7 +37,9 @@ The parser scans suffixes longest-first so `createdAt_gte` is never accidentally
 ```php
 final class UserRepository extends ServiceEntityRepository implements DataRepositoryListInterface
 {
-    use ListTrait;
+    use ListTrait {
+        applyFilters as applyDefaultFilters;
+    }
 
     public function __construct(
         ManagerRegistry $registry,
@@ -53,12 +55,12 @@ final class UserRepository extends ServiceEntityRepository implements DataReposi
 
     protected function applyFilters(QueryBuilder $qb, ListDataRequest $req): void
     {
-        parent::applyFilters($qb, $req);   // keep bundle defaults (q, IN by id, etc.)
-
+        $rest = [];
         foreach ($req->getFilterValues() as $key => $value) {
-            [$field, $op] = $this->operatorParser->parse($key);
-            if (!in_array($field, self::FILTERABLE, true)) {
-                continue;  // ignore unsupported targets
+            [$field, $op] = $this->operatorParser->parse((string) $key);
+            if ($op === 'eq' || !in_array($field, self::FILTERABLE, true)) {
+                $rest[$key] = $value;  // plain keys go to the bundle defaults below
+                continue;
             }
             match ($op) {
                 'gt'         => $qb->andWhere("e.$field > :p_$key")->setParameter("p_$key", $value),
@@ -77,9 +79,12 @@ final class UserRepository extends ServiceEntityRepository implements DataReposi
                 'contains'   => $qb->andWhere("e.$field LIKE :p_$key")->setParameter("p_$key", '%'.$value.'%'),
                 'startsWith' => $qb->andWhere("e.$field LIKE :p_$key")->setParameter("p_$key", $value.'%'),
                 'endsWith'   => $qb->andWhere("e.$field LIKE :p_$key")->setParameter("p_$key", '%'.$value),
-                default      => $qb->andWhere("e.$field = :p_$key")->setParameter("p_$key", $value),
             };
         }
+
+        // Bundle defaults for the remaining keys (q, IN by id, LIKE, ...).
+        // They refuse fields the resource does not expose with 400.
+        $this->applyDefaultFilters($qb, $req->withFilterValues($rest));
     }
 }
 ```
@@ -102,6 +107,6 @@ Numeric `_between` expects an array (`[18, 65]`), so wrap the inputs accordingly
 
 ## Security notes
 
-- **Always** maintain a whitelist of filterable fields. The parser will gladly extract `password_eq` from a query string -- it's the repository's job to ignore it.
+- **Always** maintain a whitelist of filterable fields. The parser will gladly extract `password_gte` from a query string -- it's the repository's job to ignore it. Keys you do not handle are passed on to the bundle defaults, which refuse unexposed fields with 400 (see [repositories.md](repositories.md#which-fields-a-client-may-filter-and-sort-on)).
 - For `IN` / `NIN`, cast incoming values to arrays before binding.
 - For text operators, do not splice `%` into raw SQL -- always go through parameter binding.

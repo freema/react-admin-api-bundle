@@ -6,10 +6,16 @@ namespace Freema\ReactAdminApiBundle;
 
 use Doctrine\ORM\QueryBuilder;
 use Freema\ReactAdminApiBundle\Request\ListDataRequest;
+use Freema\ReactAdminApiBundle\Request\ListFieldPolicy;
 use Freema\ReactAdminApiBundle\Result\ListDataResult;
 
 /**
  * Trait to help implement the DataRepositoryListInterface.
+ *
+ * Filter keys and the sort field come from the client. They are accepted only
+ * when they are configured here (custom filters, associations, sort map) or
+ * are mapped entity fields the resource exposes, see ListFieldPolicy. Anything
+ * else is refused with InvalidListRequestException (400).
  */
 trait ListTrait
 {
@@ -29,11 +35,17 @@ trait ListTrait
 
         // Apply sorting
         if ($dataRequest->getSortField()) {
-            $sortDirection = $dataRequest->getSortOrder() === 'DESC' ? 'DESC' : 'ASC';
+            $sortDirection = ListFieldPolicy::sortDirection($dataRequest->getSortOrder());
+            $requestedField = $dataRequest->getSortField();
 
             // Use sort field mapping if defined by repository
             $sortFieldMap = $this->getSortFieldMap();
-            $sortField = $sortFieldMap[$dataRequest->getSortField()] ?? 'e.'.$dataRequest->getSortField();
+            if (isset($sortFieldMap[$requestedField])) {
+                $sortField = $sortFieldMap[$requestedField];
+            } else {
+                $this->createListFieldPolicy($dataRequest)->assertSortable($requestedField);
+                $sortField = 'e.'.$requestedField;
+            }
             $qb->orderBy($sortField, $sortDirection);
         }
 
@@ -61,9 +73,12 @@ trait ListTrait
         $filterValues = $dataRequest->getFilterValues();
         $associations = $this->getAssociationsMap();
         $customFilters = $this->getCustomFilters();
+        $policy = $this->createListFieldPolicy($dataRequest);
+        $index = 0;
 
         // Apply field-specific filters
         foreach ($filterValues as $field => $value) {
+            $field = (string) $field;
             if ($value === null || $value === '') {
                 continue;
             }
@@ -79,6 +94,9 @@ trait ListTrait
                 continue;
             }
 
+            // Parameter names are generated, never taken from the request.
+            $param = 'filter_'.$index++;
+
             // Handle associations (e.g., threadId -> thread)
             if (isset($associations[$field])) {
                 $associationConfig = $associations[$field];
@@ -86,39 +104,41 @@ trait ListTrait
 
                 if (is_array($value)) {
                     if (count($value) === 1) {
-                        $qb->andWhere("e.$associationField = :$field")
-                            ->setParameter($field, $value[0]);
+                        $qb->andWhere("e.$associationField = :$param")
+                            ->setParameter($param, reset($value));
                     } else {
-                        $qb->andWhere("e.$associationField IN (:$field)")
-                            ->setParameter($field, $value);
+                        $qb->andWhere("e.$associationField IN (:$param)")
+                            ->setParameter($param, $value);
                     }
                 } else {
-                    $qb->andWhere("e.$associationField = :$field")
-                        ->setParameter($field, $value);
+                    $qb->andWhere("e.$associationField = :$param")
+                        ->setParameter($param, $value);
                 }
                 continue;
             }
+
+            $policy->assertFilterable($field);
 
             // Handle array values (e.g., id IN [1, 2, 3])
             if (is_array($value)) {
                 if (count($value) === 1) {
                     // Single value in array - use equals
-                    $qb->andWhere("e.$field = :$field")
-                        ->setParameter($field, $value[0]);
+                    $qb->andWhere("e.$field = :$param")
+                        ->setParameter($param, reset($value));
                 } else {
                     // Multiple values - use IN
-                    $qb->andWhere("e.$field IN (:$field)")
-                        ->setParameter($field, $value);
+                    $qb->andWhere("e.$field IN (:$param)")
+                        ->setParameter($param, $value);
                 }
             } else {
                 // String value - use LIKE for string fields, equals for others
                 // Check if field is numeric (id fields)
                 if ($field === 'id' || str_ends_with($field, 'Id')) {
-                    $qb->andWhere("e.$field = :$field")
-                        ->setParameter($field, $value);
+                    $qb->andWhere("e.$field = :$param")
+                        ->setParameter($param, $value);
                 } else {
-                    $qb->andWhere("e.$field LIKE :$field")
-                        ->setParameter($field, '%'.$value.'%');
+                    $qb->andWhere("e.$field LIKE :$param")
+                        ->setParameter($param, '%'.$value.'%');
                 }
             }
         }
@@ -135,6 +155,40 @@ trait ListTrait
                     ->setParameter('query', '%'.$filterValues['q'].'%');
             }
         }
+    }
+
+    /**
+     * Fields a client may filter on with a plain `field => value` filter.
+     * Return null (the default) to allow the identifier plus every mapped
+     * field the resource's DTO exposes as a public property. Custom filters
+     * and association filters are always allowed.
+     *
+     * @return list<string>|null
+     */
+    protected function getFilterableFields(): ?array
+    {
+        return null;
+    }
+
+    /**
+     * Fields a client may sort on, besides the keys of getSortFieldMap().
+     * Return null (the default) for the same automatic rule as filters.
+     *
+     * @return list<string>|null
+     */
+    protected function getSortableFields(): ?array
+    {
+        return null;
+    }
+
+    protected function createListFieldPolicy(ListDataRequest $dataRequest): ListFieldPolicy
+    {
+        return new ListFieldPolicy(
+            $this->getClassMetadata(),
+            $dataRequest->getDtoClass(),
+            $this->getFilterableFields(),
+            $this->getSortableFields(),
+        );
     }
 
     /**

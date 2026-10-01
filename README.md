@@ -265,6 +265,20 @@ After configuration, the bundle automatically creates these endpoints:
 | DELETE | `/api/users/{id}` | Delete user |
 | DELETE | `/api/users` | Bulk delete (with filter) |
 
+### Access control and query safety
+
+- Protect the API with Symfony security (`access_control` / firewall). For
+  per-resource or per-record rules, listen to `react_admin_api.resource_access`:
+  it runs before every endpoint above (and before related-resource lists), and
+  cancelling it answers 403. See [doc/events.md](doc/events.md#resourceaccessevent).
+- Clients can filter and sort only on fields the resource exposes (the entity
+  identifier and the public properties of its DTO); other fields and sort orders
+  other than `ASC`/`DESC` get 400. See
+  [doc/repositories.md](doc/repositories.md#which-fields-a-client-may-filter-and-sort-on).
+- A page holds at most 1000 records.
+
+Upgrading from 1.1? Read [UPGRADING.md](UPGRADING.md).
+
 ## Request/Response Examples
 
 ### GET /api/users?page=1&perPage=10&sort=name&order=ASC
