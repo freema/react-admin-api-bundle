@@ -70,6 +70,8 @@ final class OpenApiSchemaBuilder
     }
 
     /**
+     * @param class-string $dtoClass
+     *
      * @return array<string, mixed>
      */
     public function buildSchemaForDto(string $dtoClass): array

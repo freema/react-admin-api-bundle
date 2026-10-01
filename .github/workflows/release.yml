@@ -14,15 +14,15 @@ jobs:
     name: Verify tests on tag
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlite, dom, filter, json
+          extensions: intl, pdo_sqlite
           coverage: none
-      - run: composer install --prefer-dist --no-progress --no-interaction
-      - run: vendor/bin/phpstan analyse src --level=5 --no-progress
+      - run: composer update --no-interaction --no-progress --prefer-dist
       - run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      - run: vendor/bin/phpstan analyse --no-progress
       - run: vendor/bin/phpunit
 
   release:
@@ -30,7 +30,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Build changelog
