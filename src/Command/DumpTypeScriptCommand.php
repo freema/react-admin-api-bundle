@@ -84,6 +84,8 @@ final class DumpTypeScriptCommand extends Command
     }
 
     /**
+     * @param class-string $dtoClass
+     *
      * @return list<string>
      */
     private function emitInterface(string $name, string $dtoClass): array
