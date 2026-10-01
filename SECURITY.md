@@ -67,6 +67,12 @@ security:
         - { path: ^/api, roles: ROLE_ADMIN }
 ```
 
+For per-resource or per-record rules, listen to `react_admin_api.resource_access`
+(`ResourceAccessEvent`). It is dispatched before every endpoint: list, get,
+create, update, delete, deleteMany and related lists; cancelling it answers
+403. See [doc/events.md](doc/events.md#resourceaccessevent). Before 1.2.0 it
+was dispatched only for `list`.
+
 ### 2. Input Validation
 
 Always validate DTOs using Symfony's validator:
@@ -123,10 +129,19 @@ react_admin_api:
 
 ### 6. SQL Injection Prevention
 
-The bundle uses Doctrine ORM with parameterized queries, but always:
+Filter values are bound as query parameters. Filter keys and the sort field
+are names, not values, so `ListTrait` and `ListRelatedToTrait` accept only
+mapped fields of the entity that the resource exposes (its identifier and the
+public properties of its DTO), and only `ASC`/`DESC` as sort order. Anything
+else is answered with 400. Restrict the lists further with
+`getFilterableFields()` / `getSortableFields()`, see
+[doc/repositories.md](doc/repositories.md#which-fields-a-client-may-filter-and-sort-on).
+
+In your own repository code:
 
 - Use the provided filtering mechanisms
-- Never concatenate user input directly into query strings
+- Never concatenate user input directly into query strings, including field
+  names: check them against an allowlist first
 - Use custom filters with proper parameter binding
 
 ### 7. XSS Prevention
@@ -190,6 +205,8 @@ When implementing custom repository methods:
 ### DTO Factory
 
 The DtoFactory creates DTOs from request data:
+- Only public, non-static properties are assigned; keep server-side state in
+  private or protected properties (or out of the DTO)
 - Always validate DTOs after creation
 - Use proper type hints
 - Implement validation constraints

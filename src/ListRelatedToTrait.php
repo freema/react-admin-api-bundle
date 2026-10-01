@@ -7,10 +7,16 @@ namespace Freema\ReactAdminApiBundle;
 use Doctrine\ORM\QueryBuilder;
 use Freema\ReactAdminApiBundle\Interface\RelatedEntityInterface;
 use Freema\ReactAdminApiBundle\Request\ListDataRequest;
+use Freema\ReactAdminApiBundle\Request\ListFieldPolicy;
 use Freema\ReactAdminApiBundle\Result\ListDataResult;
 
 /**
  * Trait to help implement the RelatedDataRepositoryListInterface.
+ *
+ * Filter keys and the sort field are checked like in ListTrait (see
+ * ListFieldPolicy). The trait reads getFilterableFields() and
+ * getSortableFields() when the repository defines them, without declaring
+ * them itself, so it can still be combined with ListTrait.
  */
 trait ListRelatedToTrait
 {
@@ -35,14 +41,15 @@ trait ListRelatedToTrait
 
         // Apply sorting
         if ($dataRequest->getSortField()) {
-            $sortDirection = $dataRequest->getSortOrder() === 'DESC' ? 'DESC' : 'ASC';
+            $sortDirection = ListFieldPolicy::sortDirection($dataRequest->getSortOrder());
+            $this->createRelatedListFieldPolicy($dataRequest)->assertSortable($dataRequest->getSortField());
             $qb->orderBy('e.'.$dataRequest->getSortField(), $sortDirection);
         }
 
         // Apply pagination
-        if ($dataRequest->getPage() !== null && $dataRequest->getPerPage() !== null) {
-            $qb->setFirstResult(($dataRequest->getPage() - 1) * $dataRequest->getPerPage());
-            $qb->setMaxResults($dataRequest->getPerPage());
+        if ($dataRequest->getOffset() !== null && $dataRequest->getLimit() !== null) {
+            $qb->setFirstResult($dataRequest->getOffset());
+            $qb->setMaxResults($dataRequest->getLimit());
         }
 
         $entities = $qb->getQuery()->getResult();
@@ -61,15 +68,20 @@ trait ListRelatedToTrait
     protected function applyFilters(QueryBuilder $qb, ListDataRequest $dataRequest): void
     {
         $filterValues = $dataRequest->getFilterValues();
+        $policy = $this->createRelatedListFieldPolicy($dataRequest);
+        $index = 0;
 
         // Apply field-specific filters
         foreach ($filterValues as $field => $value) {
-            if ($value === null || $value === '') {
+            $field = (string) $field;
+            if ($value === null || $value === '' || $field === 'q') {
                 continue;
             }
 
-            $qb->andWhere("e.$field LIKE :$field")
-                ->setParameter($field, '%'.$value.'%');
+            $policy->assertFilterable($field);
+            $param = 'filter_'.$index++;
+            $qb->andWhere("e.$field LIKE :$param")
+                ->setParameter($param, '%'.(is_scalar($value) ? $value : '').'%');
         }
 
         // Apply general filter (q parameter)
@@ -84,6 +96,16 @@ trait ListRelatedToTrait
                     ->setParameter('query', '%'.$filterValues['q'].'%');
             }
         }
+    }
+
+    private function createRelatedListFieldPolicy(ListDataRequest $dataRequest): ListFieldPolicy
+    {
+        return new ListFieldPolicy(
+            $this->getClassMetadata(),
+            $dataRequest->getDtoClass(),
+            method_exists($this, 'getFilterableFields') ? $this->getFilterableFields() : null,
+            method_exists($this, 'getSortableFields') ? $this->getSortableFields() : null,
+        );
     }
 
     /**

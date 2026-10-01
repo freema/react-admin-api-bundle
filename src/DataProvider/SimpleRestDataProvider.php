@@ -64,10 +64,10 @@ class SimpleRestDataProvider extends AbstractDataProvider
         if (is_string($range)) {
             $decoded = json_decode($range, true);
             if (is_array($decoded) && count($decoded) === 2) {
-                $start = (int) $decoded[0];
+                $start = max(0, (int) $decoded[0]);
                 $end = (int) $decoded[1];
-                $perPage = $end - $start + 1;
-                $page = (int) floor($start / $perPage) + 1;
+                $perPage = max(1, min($end - $start + 1, ListDataRequest::MAX_LIMIT));
+                $page = intdiv($start, $perPage) + 1;
 
                 return [$page, $perPage];
             }

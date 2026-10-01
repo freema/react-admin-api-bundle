@@ -109,6 +109,24 @@ class DtoFactoryTest extends TestCase
         $this->assertNull($dto->age);
     }
 
+    public function test_only_public_properties_are_assigned(): void
+    {
+        $data = [
+            'name' => 'Mallory',
+            'isAdmin' => true,
+            'internalNote' => 'set by request',
+            'registry' => ['forged'],
+        ];
+
+        $dto = $this->dtoFactory->createFromArray($data, GuardedTestDto::class);
+
+        $this->assertInstanceOf(GuardedTestDto::class, $dto);
+        $this->assertSame('Mallory', $dto->name);
+        $this->assertFalse($dto->isAdmin());
+        $this->assertSame('', $dto->internalNote());
+        $this->assertSame([], GuardedTestDto::$registry);
+    }
+
     public function test_create_from_array_with_complex_data(): void
     {
         $data = [
@@ -236,6 +254,41 @@ class NullableTestDto implements DtoInterface
     public static function getMappedEntityClass(): string
     {
         return 'NullableTestEntity';
+    }
+
+    public static function createFromEntity($entity): self
+    {
+        return new self();
+    }
+}
+
+class GuardedTestDto implements DtoInterface
+{
+    /** @var array<string> */
+    public static array $registry = [];
+
+    public string $name = '';
+    private bool $isAdmin = false;
+    protected string $internalNote = '';
+
+    public function isAdmin(): bool
+    {
+        return $this->isAdmin;
+    }
+
+    public function internalNote(): string
+    {
+        return $this->internalNote;
+    }
+
+    public function toArray(): array
+    {
+        return ['name' => $this->name];
+    }
+
+    public static function getMappedEntityClass(): string
+    {
+        return 'GuardedTestEntity';
     }
 
     public static function createFromEntity($entity): self

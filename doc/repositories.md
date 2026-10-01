@@ -196,6 +196,43 @@ class UserRepository extends EntityRepository implements
 
 The `ListTrait` provides several methods to configure how filtering and searching works:
 
+### Which fields a client may filter and sort on
+
+Filter keys and the sort field come from the client and become `e.<field>` in
+DQL, so `ListTrait` and `ListRelatedToTrait` accept only:
+
+- keys of `getCustomFilters()` and `getAssociationsMap()` (filters), and keys
+  of `getSortFieldMap()` (sorting): you wrote those, so they are trusted;
+- mapped fields of the entity that the resource exposes. By default that is
+  the identifier plus every field with a matching **public property on the
+  resource's DTO**. A column the DTO does not expose, such as `password`,
+  cannot be filtered or sorted on, so it cannot be guessed character by
+  character with `LIKE` either.
+
+Anything else, and a sort order other than `ASC`/`DESC`, is refused with
+`400 Bad Request` (`InvalidListRequestException`). To choose the fields
+yourself, return a list; the field must still be a mapped entity field:
+
+```php
+protected function getFilterableFields(): ?array
+{
+    return ['id', 'name', 'email', 'createdAt'];
+}
+
+protected function getSortableFields(): ?array
+{
+    return ['id', 'name', 'createdAt'];
+}
+```
+
+Return `null` (the default) for the automatic rule. Called directly, without
+the bundle's controllers, the repository does not know the DTO and allows
+every mapped field.
+
+A page is at most `ListDataRequest::MAX_LIMIT` (1000) records, the size
+react-admin's export asks for. A related-resource list requested without
+pagination returns the first 1000 instead of every row.
+
 ### Full Text Search Fields
 
 The `getFullSearchFields()` method defines which fields should be searched when the `q` (query) parameter is used:

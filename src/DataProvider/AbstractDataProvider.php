@@ -58,6 +58,11 @@ abstract class AbstractDataProvider implements DataProviderInterface
      */
     protected function createListDataRequest(int $page, int $perPage, string $sortField, string $sortOrder, array $filter): ListDataRequest
     {
+        // Bound the page before computing the offset, so a huge per_page cannot
+        // overflow it and a non-positive one cannot divide by zero elsewhere.
+        $page = max(1, $page);
+        $perPage = max(1, min($perPage, ListDataRequest::MAX_LIMIT));
+
         // Convert page/perPage to offset/limit
         $offset = ($page - 1) * $perPage;
         $limit = $perPage;

@@ -190,9 +190,33 @@ if ($deletedEntity) {
 
 #### ResourceAccessEvent
 
-Dispatched on every resource access for access control and auditing.
+Dispatched before every resource access, for access control and auditing. It
+runs before the request body is used or the repository is called, so
+cancelling it answers `403 Forbidden` and nothing else happens.
 
 **Event Name**: `react_admin_api.resource_access`
+
+| Endpoint | `getOperation()` | `getResourceId()` | Context |
+|---|---|---|---|
+| `GET /{resource}` | `list` | `null` | |
+| `GET /{resource}/{id}` | `get` | `{id}` | |
+| `POST /{resource}` | `create` | `null` | |
+| `PUT /{resource}/{id}` | `update` | `{id}` | |
+| `DELETE /{resource}/{id}` | `delete` | `{id}` | |
+| `DELETE /{resource}` | `deleteMany` | `null` | `ids`: the ids to delete |
+| `GET /{resource}/{id}/{related}` | `get` on `{resource}`, then `list` on `{related}` | `{id}`, then `null` | on the `list` event: `parentResource`, `parentId` |
+
+A related-resource list dispatches two events, so a rule that hides a
+resource also hides it as a related list, and a parent the user may not read
+cannot be used to list its children.
+
+`isWriteOperation()` is true for `create`, `update`, `delete` and
+`deleteMany`; `isReadOperation()` for `list` and `get`.
+
+> Before 1.2.0 the event was dispatched only for `list`. Listeners written
+> against those versions now also see `get`, `create`, `update`, `delete`,
+> `deleteMany` and related lists; check that a listener which only expected
+> `list` does what you want for the other operations.
 
 ```php
 $event = new ResourceAccessEvent($resource, $request, $operation, $resourceId);
