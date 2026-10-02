@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Freema\ReactAdminApiBundle\Request;
 
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\QueryBuilder;
 use Freema\ReactAdminApiBundle\Exception\InvalidListRequestException;
 
 /**
@@ -90,6 +91,36 @@ final class ListFieldPolicy
             'DESC' => 'DESC',
             default => throw InvalidListRequestException::sortOrder((string) $order),
         };
+    }
+
+    /**
+     * The sort direction in the form QueryBuilder::orderBy() takes: the
+     * SortDirection enum where doctrine/orm accepts it (3.7+, which deprecates
+     * strings), 'ASC' or 'DESC' on older versions.
+     *
+     * @param 'ASC'|'DESC' $direction
+     */
+    public static function ormSortDirection(string $direction): string|\UnitEnum
+    {
+        static $takesEnum;
+        $takesEnum ??= self::ormTakesSortDirection();
+
+        if (!$takesEnum) {
+            return $direction;
+        }
+
+        return 'DESC' === $direction ? \SortDirection::Descending : \SortDirection::Ascending;
+    }
+
+    private static function ormTakesSortDirection(): bool
+    {
+        if (!enum_exists(\SortDirection::class)) {
+            return false;
+        }
+
+        $type = (new \ReflectionMethod(QueryBuilder::class, 'orderBy'))->getParameters()[1]->getType();
+
+        return null !== $type && str_contains((string) $type, 'SortDirection');
     }
 
     /**

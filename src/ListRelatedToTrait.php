@@ -43,7 +43,7 @@ trait ListRelatedToTrait
         if ($dataRequest->getSortField()) {
             $sortDirection = ListFieldPolicy::sortDirection($dataRequest->getSortOrder());
             $this->createRelatedListFieldPolicy($dataRequest)->assertSortable($dataRequest->getSortField());
-            $qb->orderBy('e.'.$dataRequest->getSortField(), $sortDirection);
+            $qb->orderBy('e.'.$dataRequest->getSortField(), ListFieldPolicy::ormSortDirection($sortDirection));
         }
 
         // Apply pagination

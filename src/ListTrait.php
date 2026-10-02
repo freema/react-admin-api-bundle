@@ -46,7 +46,7 @@ trait ListTrait
                 $this->createListFieldPolicy($dataRequest)->assertSortable($requestedField);
                 $sortField = 'e.'.$requestedField;
             }
-            $qb->orderBy($sortField, $sortDirection);
+            $qb->orderBy($sortField, ListFieldPolicy::ormSortDirection($sortDirection));
         }
 
         // Apply pagination
