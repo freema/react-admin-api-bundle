@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Freema\ReactAdminApiBundle\Tests\Functional\App;
 
+use Composer\InstalledVersions;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Freema\ReactAdminApiBundle\ReactAdminApiBundle;
 use Freema\ReactAdminApiBundle\Tests\Functional\App\Dto\AccountDto;
@@ -32,11 +33,17 @@ class TestKernel extends Kernel
             'secret' => 'test',
             'http_method_override' => false,
             'router' => ['utf8' => true],
-        ]);
+        ] + (6 === Kernel::MAJOR_VERSION ? [
+            // Symfony 6.4 deprecates leaving these unset; they are the defaults from 7.0
+            'handle_all_throwables' => true,
+            'php_errors' => ['log' => true],
+            'validation' => ['email_validation_mode' => 'html5'],
+        ] : []));
         $container->loadFromExtension('doctrine', [
             'dbal' => ['url' => 'sqlite:///:memory:'],
             // ORM 3.4+ on PHP 8.4 uses native lazy objects instead of var-exporter ghosts.
-            'orm' => (\PHP_VERSION_ID >= 80400 ? ['enable_native_lazy_objects' => true] : []) + [
+            // DoctrineBundle 3.1+ always does and deprecates the option.
+            'orm' => (\PHP_VERSION_ID >= 80400 && version_compare((string) InstalledVersions::getVersion('doctrine/doctrine-bundle'), '3.1', '<') ? ['enable_native_lazy_objects' => true] : []) + [
                 'mappings' => [
                     'Test' => [
                         'is_bundle' => false,

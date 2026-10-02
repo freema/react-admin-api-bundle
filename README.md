@@ -362,9 +362,9 @@ composer lint        # Code style check
 
 ## Supported Versions
 
-- PHP 8.2+
-- Symfony 6.4+ / 7.1+
-- Doctrine ORM 2.14+
+- PHP 8.2+ (Symfony 8 needs PHP 8.4+)
+- Symfony 6.4, 7.x and 8.x
+- Doctrine ORM 2.16+ or 3.x, DoctrineBundle 2.10+ (3.x on Symfony 8)
 
 ## License
 
