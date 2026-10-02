@@ -2,9 +2,22 @@ parameters:
     level: 8
     paths:
         - src
+        # PHPStan analyses the repository traits only through classes that
+        # use them
+        - tests/Functional/App/Repository
+        - tests/PHPStan
     excludePaths:
         - dev
     treatPhpDocTypesAsCertain: false
     ignoreErrors:
         -
             identifier: missingType.iterableValue
+        -
+            # The traits check getEntityManager() at runtime because their
+            # abstract declaration is untyped; in a ServiceEntityRepository
+            # the check always passes
+            identifier: instanceof.alwaysTrue
+            paths:
+                - src/CreateTrait.php
+                - src/DeleteTrait.php
+                - src/UpdateTrait.php

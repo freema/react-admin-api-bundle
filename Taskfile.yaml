@@ -94,7 +94,7 @@ tasks:
   # Code Quality
   stan:
     desc: 'Run PHPStan analysis'
-    cmd: 'docker exec -it {{ .CONTAINER_NAME }} vendor/bin/phpstan analyse src'
+    cmd: 'docker exec -it {{ .CONTAINER_NAME }} vendor/bin/phpstan analyse'
     aliases: ['lint']
 
   cs:fix:
