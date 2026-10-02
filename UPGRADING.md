@@ -8,6 +8,13 @@ The bundle supports Symfony 8. Symfony 8 needs PHP 8.4 and DoctrineBundle 3,
 so an application moving to it follows DoctrineBundle's own upgrade notes.
 Nothing changes for applications that stay on Symfony 6.4 or 7.
 
+### `SoftDeleteTrait::delete()` works
+
+`SoftDeleteTrait::delete()` passed the entity id where `DeleteDataResult`
+expects a status, so every delete failed with a `TypeError` after the entity
+had already been soft-deleted (or removed). It now answers like `DeleteTrait`:
+success, or `400 {"error": "Entity with ID … not found"}` for an unknown id.
+
 ### Sorting on doctrine/orm 3.7+
 
 doctrine/orm 3.7 deprecates passing the sort direction to

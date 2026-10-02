@@ -28,7 +28,7 @@ trait SoftDeleteTrait
 
         $entity = $this->find($request->getId());
         if ($entity === null) {
-            return new DeleteDataResult($request->getId());
+            return $request->createResult(false, [sprintf('Entity with ID %s not found', $request->getId())]);
         }
 
         $em = $this->getEntityManager();
@@ -42,7 +42,7 @@ trait SoftDeleteTrait
             $em->flush();
         }
 
-        return new DeleteDataResult($request->getId());
+        return $request->createResult(true);
     }
 
     /**
