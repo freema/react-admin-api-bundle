@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Freema\ReactAdminApiBundle\Tests\Request;
 
+use Doctrine\Deprecations\Deprecation;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\QueryBuilder;
 use Freema\ReactAdminApiBundle\Exception\InvalidListRequestException;
 use Freema\ReactAdminApiBundle\Request\ListFieldPolicy;
 use Freema\ReactAdminApiBundle\Tests\Functional\App\Dto\AccountDto;
@@ -89,5 +92,21 @@ class ListFieldPolicyTest extends TestCase
 
         $this->expectException(InvalidListRequestException::class);
         ListFieldPolicy::sortDirection('ASC, e.password');
+    }
+
+    public function test_orm_sort_direction_is_what_the_installed_orm_takes(): void
+    {
+        Deprecation::enableTrackingDeprecations();
+        $before = Deprecation::getTriggeredDeprecations()['https://github.com/doctrine/orm/issues/11313'] ?? 0;
+
+        $qb = (new QueryBuilder($this->createMock(EntityManagerInterface::class)))
+            ->select('e')
+            ->from(Account::class, 'e')
+            ->orderBy('e.name', ListFieldPolicy::ormSortDirection('DESC'))
+            ->addOrderBy('e.id', ListFieldPolicy::ormSortDirection('ASC'));
+
+        $this->assertStringEndsWith('ORDER BY e.name DESC, e.id ASC', $qb->getDQL());
+        // doctrine/orm 3.7+ deprecates string directions
+        $this->assertSame($before, Deprecation::getTriggeredDeprecations()['https://github.com/doctrine/orm/issues/11313'] ?? 0);
     }
 }
