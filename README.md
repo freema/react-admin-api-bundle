@@ -355,9 +355,10 @@ class CustomUserRepository implements DataRepositoryListInterface
 The bundle contains a complete test suite in the `tests/` directory:
 
 ```bash
-composer test        # PHPUnit tests
-composer test:php    # PHP syntax check
-composer lint        # Code style check
+vendor/bin/phpunit                         # PHPUnit tests
+vendor/bin/phpstan analyse                 # Static analysis
+vendor/bin/php-cs-fixer fix --dry-run      # Code style check
+task test:all                              # Tests against Symfony 6.4, 7.4 and 8 (Docker)
 ```
 
 ## Supported Versions

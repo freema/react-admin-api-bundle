@@ -47,43 +47,59 @@ tasks:
     cmd: 'docker exec -it {{ .CONTAINER_NAME }} composer update'
     aliases: ['update']
 
-  # Test Environment Setup
+  # Testing Different Symfony Versions, the way CI does: copy the bundle into
+  # a scratch directory and let Symfony Flex restrict symfony/* to the
+  # requested version
   test:prepare:
-    desc: 'Prepare test environment'
+    desc: 'Copy the bundle into a scratch directory for a version test'
     cmds:
       - rm -rf {{ .TEST_DIR }}
-      - mkdir -p {{ .TEST_DIR }}/vendor
-      - cp -r src {{ .TEST_DIR }}/
-      - cp -r tests {{ .TEST_DIR }}/
-      - cp -r dev {{ .TEST_DIR }}/
-      - cp phpunit.xml.dist {{ .TEST_DIR }}/phpunit.xml
-      - cp .env.test {{ .TEST_DIR }}/ || true
-      - cp -r config {{ .TEST_DIR }}/ || true
+      - mkdir -p {{ .TEST_DIR }}
+      - cp -r src tests composer.json phpunit.xml.dist {{ .TEST_DIR }}/
 
-  # Testing Different Symfony Versions
-  test:symfony64:
-    desc: 'Test with Symfony 6.4'
+  test:symfony:
+    internal: true
     cmds:
       - task: test:prepare
-      - cp test/symfony64/composer.json {{ .TEST_DIR }}/composer.json
-      - docker exec -it {{ .CONTAINER_NAME }} sh -c "cd /app/{{ .TEST_DIR }} && composer install --no-interaction"
-      - docker exec -it {{ .CONTAINER_NAME }} sh -c "cd /app/{{ .TEST_DIR }} && vendor/bin/phpunit"
+      - >-
+        {{ .RUNNER }} sh -c "composer global config --no-plugins allow-plugins.symfony/flex true
+        && composer global require --quiet --no-interaction symfony/flex
+        && SYMFONY_REQUIRE='{{ .SYMFONY }}' composer update --no-interaction --no-progress
+        && vendor/bin/phpunit"
+
+  test:symfony64:
+    desc: 'Test with Symfony 6.4 (PHP 8.2 container)'
+    cmds:
+      - task: test:symfony
+        vars:
+          SYMFONY: '6.4.*'
+          RUNNER: 'docker exec -w /app/{{ .TEST_DIR }} {{ .CONTAINER_NAME }}'
     aliases: ['t:64']
 
-  test:symfony71:
-    desc: 'Test with Symfony 7.1'
+  test:symfony74:
+    desc: 'Test with Symfony 7.4 (PHP 8.2 container)'
     cmds:
-      - task: test:prepare
-      - cp test/symfony71/composer.json {{ .TEST_DIR }}/composer.json
-      - docker exec -it {{ .CONTAINER_NAME }} sh -c "cd /app/{{ .TEST_DIR }} && composer install --no-interaction"
-      - docker exec -it {{ .CONTAINER_NAME }} sh -c "cd /app/{{ .TEST_DIR }} && vendor/bin/phpunit"
-    aliases: ['t:71']
+      - task: test:symfony
+        vars:
+          SYMFONY: '7.4.*'
+          RUNNER: 'docker exec -w /app/{{ .TEST_DIR }} {{ .CONTAINER_NAME }}'
+    aliases: ['t:74']
+
+  test:symfony8:
+    desc: 'Test with Symfony 8 (needs PHP 8.4+, runs in the composer:2 image)'
+    cmds:
+      - task: test:symfony
+        vars:
+          SYMFONY: '8.*'
+          RUNNER: 'docker run --rm -v "{{ .ROOT_DIR }}":/app -w /app/{{ .TEST_DIR }} composer:2'
+    aliases: ['t:8']
 
   test:all:
-    desc: 'Test with all Symfony versions'
+    desc: 'Test with all supported Symfony versions'
     cmds:
       - task: test:symfony64
-      - task: test:symfony71
+      - task: test:symfony74
+      - task: test:symfony8
     aliases: ['t:all']
 
   test:cleanup:

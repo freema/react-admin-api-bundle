@@ -8,6 +8,7 @@ Thumbs.db
 
 # Composer
 /vendor/
+/composer.lock
 composer.phar
 
 # Symfony specific
@@ -17,6 +18,9 @@ composer.phar
 !dev/var/cache/.gitkeep
 !dev/var/log/.gitkeep
 !dev/var/sessions/.gitkeep
+
+# Symfony version tests (task test:symfony*)
+/.symfony-test/
 
 # PHPUnit
 /phpunit.xml
