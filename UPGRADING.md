@@ -1,5 +1,13 @@
 # Upgrading
 
+## From 1.2 to 1.3
+
+### Symfony 8
+
+The bundle supports Symfony 8. Symfony 8 needs PHP 8.4 and DoctrineBundle 3,
+so an application moving to it follows DoctrineBundle's own upgrade notes.
+Nothing changes for applications that stay on Symfony 6.4 or 7.
+
 ## From 1.1 to 1.2
 
 1.2.0 is a security release. It does not remove any public API, but the
